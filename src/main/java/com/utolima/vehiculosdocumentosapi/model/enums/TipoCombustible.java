@@ -1,5 +1,8 @@
 package com.utolima.vehiculosdocumentosapi.model.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum TipoCombustible {
     GASOLINA("Gasolina"), // ojo: el CHECK de la BD exige mayúscula solo en la primera letra
     GAS("Gas"),
@@ -10,11 +13,11 @@ public enum TipoCombustible {
     TipoCombustible(String codigo) {
         this.codigo = codigo;
     }
-
+    @JsonValue // Jackson usa esto para SERIALIZAR: al devolver JSON, escribe "Pu" en vez de "PUBLICO"
     public String getCodigo() {
         return codigo;
     }
-
+    @JsonCreator // Jackson usa esto para DESERIALIZAR: al recibir "Pu" en el JSON, construye TipoServicio.PUBLICO
     public static TipoCombustible fromCodigo(String codigo) {
         for (TipoCombustible tc : values()) {
             if (tc.codigo.equals(codigo)) {

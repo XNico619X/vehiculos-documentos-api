@@ -1,3 +1,5 @@
+package com.utolima.vehiculosdocumentosapi.model;
+
 import com.utolima.vehiculosdocumentosapi.model.enums.AplicaVehiculo;
 import com.utolima.vehiculosdocumentosapi.model.enums.Obligatoriedad;
 
@@ -17,6 +19,9 @@ import lombok.Setter;
 
 import java.util.List;
 import jakarta.persistence.OneToMany;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @Entity
 @Table(name = "documentos") // nombre exacto de la tabla ya creada
@@ -50,6 +55,7 @@ public class Documento {
     @Column(name = "descripcion", length = 255) // no lleva @NotNull: el PDF no la marca como obligatoria
     private String descripcion;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "documento", fetch = FetchType.LAZY)
     private List<VehiculoDocumento> vehiculosAsociados;
 }

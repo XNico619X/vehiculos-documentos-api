@@ -23,6 +23,9 @@ import lombok.Setter;
 import java.util.List;
 import jakarta.persistence.OneToMany;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+
 @Entity // le dice a JPA/Hibernate: "esta clase se mapea a una tabla de la base de datos"
 @Table(name = "vehiculos") // nombre exacto de la tabla ya creada con el script SQL
 @Getter // Lombok genera automaticamente todos los getters (getId(), getPlaca(), etc.)
@@ -74,6 +77,10 @@ public class Vehiculo {
     @Column(name = "linea", nullable = false, length = 50)
     private String linea;
     
+    @JsonIgnore // evita que Jackson intente serializar esta lista y caiga en bucle infinito
     @OneToMany(mappedBy = "vehiculo", fetch = FetchType.LAZY) // "mappedBy" apunta al nombre del campo en VehiculoDocumento
     private List<VehiculoDocumento> documentosAsociados;
+    
 }
+
+
