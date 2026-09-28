@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.utolima.vehiculosdocumentosapi.dto.CargaDocumentoDTO;
 import com.utolima.vehiculosdocumentosapi.dto.DocumentoAsociadoRequestDTO;
 import com.utolima.vehiculosdocumentosapi.dto.VehiculoRequestDTO;
 import com.utolima.vehiculosdocumentosapi.model.Vehiculo;
@@ -91,5 +92,13 @@ public class VehiculoController {
                                                                @Valid @RequestBody DocumentoAsociadoRequestDTO dto) {
         VehiculoDocumento creado = vehiculoService.agregarDocumento(id, dto);
         return new ResponseEntity<>(creado, HttpStatus.CREATED);
+    }
+    @PostMapping("/{id}/documentos/pdf")
+    public ResponseEntity<Void> cargarDocumentosPdf(
+            @PathVariable Long id, 
+            @Valid @RequestBody List<CargaDocumentoDTO> documentosPdf) {
+        
+        vehiculoService.cargarDocumentosPdf(id, documentosPdf);
+        return ResponseEntity.noContent().build(); // Retorna 204 No Content en caso de éxito
     }
 }

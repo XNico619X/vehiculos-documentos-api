@@ -8,6 +8,7 @@ import com.utolima.vehiculosdocumentosapi.model.Vehiculo;
 import com.utolima.vehiculosdocumentosapi.model.VehiculoDocumento;
 import com.utolima.vehiculosdocumentosapi.model.enums.EstadoDocumento;
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoVehiculo;
+import com.utolima.vehiculosdocumentosapi.dto.CargaDocumentoDTO;
 
 // La interfaz define QUE operaciones existen, sin decir COMO se implementan
 public interface VehiculoService {
@@ -31,4 +32,6 @@ public interface VehiculoService {
     List<Vehiculo> buscarPorEstadoDocumento(EstadoDocumento estado);
 
     VehiculoDocumento agregarDocumento(Long idVehiculo, DocumentoAsociadoRequestDTO dto);
+
+    void cargarDocumentosPdf(Long idVehiculo, List<CargaDocumentoDTO> documentosPdf);
 }
