@@ -11,7 +11,7 @@ import com.utolima.vehiculosdocumentosapi.dto.PersonaResponseDTO;
 import com.utolima.vehiculosdocumentosapi.exception.RecursoNoEncontradoException;
 import com.utolima.vehiculosdocumentosapi.mapper.PersonaMapper;
 import com.utolima.vehiculosdocumentosapi.model.Persona;
-import com.utolima.vehiculosdocumentosapi.model.TipoPersona;
+import com.utolima.vehiculosdocumentosapi.model.enums.TipoPersona;
 import com.utolima.vehiculosdocumentosapi.model.Usuario;
 import com.utolima.vehiculosdocumentosapi.model.UsuarioId;
 import com.utolima.vehiculosdocumentosapi.repository.PersonaRepository;

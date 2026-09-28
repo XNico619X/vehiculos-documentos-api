@@ -1,4 +1,4 @@
-package com.utolima.vehiculosdocumentosapi.model;
+package com.utolima.vehiculosdocumentosapi.model.enums;
 
 public enum TipoIdentificacion {
     CC

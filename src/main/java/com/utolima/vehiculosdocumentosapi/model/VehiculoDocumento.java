@@ -17,12 +17,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.Lob;
 
 @Entity
 @Table(name = "vehiculo_documento")
 @Getter
 @Setter
 @NoArgsConstructor
+
 public class VehiculoDocumento {
 
     @EmbeddedId // la llave primaria de esta entidad no es un campo simple, es el objeto VehiculoDocumentoId completo
@@ -49,4 +51,8 @@ public class VehiculoDocumento {
     @NotNull
     @Column(name = "estado_documento", nullable = false, length = 20)
     private EstadoDocumento estadoDocumento;
+
+    @Lob
+    @Column(name = "documento_base64", columnDefinition = "LONGTEXT")
+    private String documentoBase64;
 }

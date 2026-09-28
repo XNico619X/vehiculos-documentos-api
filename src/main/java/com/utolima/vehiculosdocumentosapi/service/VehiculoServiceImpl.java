@@ -12,11 +12,13 @@ import com.utolima.vehiculosdocumentosapi.exception.VehiculoSinDocumentoExceptio
 import com.utolima.vehiculosdocumentosapi.model.Documento;
 import com.utolima.vehiculosdocumentosapi.model.Vehiculo;
 import com.utolima.vehiculosdocumentosapi.model.VehiculoDocumento;
+import com.utolima.vehiculosdocumentosapi.model.VehiculoDocumentoId;
 import com.utolima.vehiculosdocumentosapi.model.enums.EstadoDocumento;
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoVehiculo;
 import com.utolima.vehiculosdocumentosapi.repository.DocumentoRepository;
 import com.utolima.vehiculosdocumentosapi.repository.VehiculoDocumentoRepository;
 import com.utolima.vehiculosdocumentosapi.repository.VehiculoRepository;
+import com.utolima.vehiculosdocumentosapi.dto.CargaDocumentoDTO;
 
 @Service // marca esta clase como un bean de Spring en la capa de servicio (coincide con el @Service del diagrama del PDF)
 public class VehiculoServiceImpl implements VehiculoService {
@@ -37,7 +39,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     @Override
-    @Transactional // si algo falla a mitad de este metodo, TODO se revierte (ni el vehiculo ni ningun documento quedan guardados a medias)
+    @Transactional // si algo falla a mitad de este metodo, todo se revierte (ni el vehiculo ni ningun documento quedan guardados a medias)
     public Vehiculo crear(VehiculoRequestDTO dto) {
         // segunda linea de defensa de la regla "minimo un documento": el DTO ya lo valida con @NotEmpty,
         // pero este chequeo protege el metodo aunque lo llamen desde otro lugar sin pasar por esa validacion
@@ -145,7 +147,34 @@ public class VehiculoServiceImpl implements VehiculoService {
         vd.setFechaExpedicion(dto.getFechaExpedicion());
         vd.setFechaVencimiento(dto.getFechaVencimiento());
         vd.setEstadoDocumento(EstadoDocumento.EN_VERIFICACION);
-
+        
+        
         return vehiculoDocumentoRepository.save(vd);
+    }
+    @Override
+    @Transactional
+    public void cargarDocumentosPdf(Long idVehiculo, List<CargaDocumentoDTO> documentosPdf) {
+        // 1. Verificamos que el vehículo exista
+        // 1. Verificamos que el vehículo exista
+        vehiculoRepository.findById(idVehiculo)
+            .orElseThrow(() -> new RecursoNoEncontradoException("No existe el vehículo con id " + idVehiculo));
+
+        // 2. Iteramos sobre los documentos que llegan en el request
+        for (CargaDocumentoDTO dto : documentosPdf) {
+            // Buscamos el registro puente específico (VehiculoDocumento)
+            VehiculoDocumentoId vdId = new VehiculoDocumentoId(idVehiculo, dto.getIdDocumento());
+            VehiculoDocumento vehiculoDocumento = vehiculoDocumentoRepository.findById(vdId)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "El vehículo no tiene asociado el documento con id " + dto.getIdDocumento()));
+
+            // Validar que el string Base64 sea un PDF (Opcional pero muy recomendado)
+            if (!dto.getDocumentoBase64().startsWith("JVBERi0")) { // "JVBERi0" es el inicio estándar de un PDF en Base64
+                throw new IllegalArgumentException("El archivo proporcionado para el documento " + dto.getIdDocumento() + " no es un PDF válido.");
+            }
+
+            // 3. Actualizamos el campo BLOB
+            vehiculoDocumento.setDocumentoBase64(dto.getDocumentoBase64());
+            vehiculoDocumentoRepository.save(vehiculoDocumento);
+        }
     }
 }

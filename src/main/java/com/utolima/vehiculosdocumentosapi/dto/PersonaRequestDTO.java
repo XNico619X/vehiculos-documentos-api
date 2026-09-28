@@ -1,7 +1,7 @@
 package com.utolima.vehiculosdocumentosapi.dto;
 
-import com.utolima.vehiculosdocumentosapi.model.TipoIdentificacion;
-import com.utolima.vehiculosdocumentosapi.model.TipoPersona;
+import com.utolima.vehiculosdocumentosapi.model.enums.TipoIdentificacion;
+import com.utolima.vehiculosdocumentosapi.model.enums.TipoPersona;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

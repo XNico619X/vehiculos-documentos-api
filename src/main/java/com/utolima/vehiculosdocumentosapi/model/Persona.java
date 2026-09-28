@@ -1,5 +1,8 @@
 package com.utolima.vehiculosdocumentosapi.model;
 
+import com.utolima.vehiculosdocumentosapi.model.enums.TipoIdentificacion;
+import com.utolima.vehiculosdocumentosapi.model.enums.TipoPersona;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
