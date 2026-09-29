@@ -53,6 +53,6 @@ public class VehiculoDocumento {
     private EstadoDocumento estadoDocumento;
 
     @Lob
-    @Column(name = "documento_base64", columnDefinition = "LONGTEXT")
-    private String documentoBase64;
+    @Column(name = "documento_base64", columnDefinition = "LONGBLOB")
+    private byte[] documentoBase64;
 }

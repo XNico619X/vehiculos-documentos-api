@@ -173,7 +173,7 @@ public class VehiculoServiceImpl implements VehiculoService {
             }
 
             // 3. Actualizamos el campo BLOB
-            vehiculoDocumento.setDocumentoBase64(dto.getDocumentoBase64());
+            vehiculoDocumento.setDocumentoBase64(dto.getDocumentoBase64().getBytes(java.nio.charset.StandardCharsets.UTF_8));
             vehiculoDocumentoRepository.save(vehiculoDocumento);
         }
     }
