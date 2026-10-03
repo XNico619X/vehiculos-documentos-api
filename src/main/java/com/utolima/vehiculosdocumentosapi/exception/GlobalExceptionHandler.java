@@ -1,6 +1,7 @@
 package com.utolima.vehiculosdocumentosapi.exception;
 
 import java.time.LocalDateTime;
+
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -8,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
 import com.utolima.vehiculosdocumentosapi.dto.ErrorResponseDTO;
 
 @RestControllerAdvice // se aplica a TODOS los @RestController de la aplicacion, sin tener que repetir nada en cada uno
@@ -38,6 +38,11 @@ public class GlobalExceptionHandler {
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage()) // ej. "placa: size must be between 6 and 6"
                 .toList();
         ErrorResponseDTO error = new ErrorResponseDTO(LocalDateTime.now(), 400, "Error de validación", detalles);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(PersonaNoEsConductorException.class)
+    public ResponseEntity<ErrorResponseDTO> manejarPersonaNoEsConductor(PersonaNoEsConductorException ex) {
+        ErrorResponseDTO error = new ErrorResponseDTO(LocalDateTime.now(), 400, ex.getMessage(), null);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 }

@@ -21,8 +21,7 @@ public class Persona {
     @Column(name = "identificacion", nullable = false, unique = true)
     private String identificacion;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_identificacion", nullable = false)
+    @Column(name = "tipo_identificacion", nullable = false, length = 5)
     private TipoIdentificacion tipoIdentificacion;
 
     @Column(name = "nombres", nullable = false)
