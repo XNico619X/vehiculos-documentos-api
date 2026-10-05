@@ -73,6 +73,8 @@ public class PersonaServiceImpl implements PersonaService {
     @Transactional
     public PersonaResponseDTO actualizar(Long id, PersonaRequestDTO dto) {
         Persona persona = buscarPersonaOLanzar(id);
+        TipoPersona tipoAnterior = persona.getTipoPersona(); // guardamos el tipo ANTES de pisarlo con los datos nuevos
+
         persona.setIdentificacion(dto.getIdentificacion());
         persona.setTipoIdentificacion(dto.getTipoIdentificacion());
         persona.setNombres(dto.getNombres());
@@ -81,9 +83,19 @@ public class PersonaServiceImpl implements PersonaService {
         persona.setTipoPersona(dto.getTipoPersona());
 
         Persona personaActualizada = personaRepository.save(persona);
-        Usuario usuario = usuarioRepository.findByIdIdPersona(id).orElse(null);
 
-        return PersonaMapper.toResponseDTO(personaActualizada, usuario, false);
+        Usuario usuario = usuarioRepository.findByIdIdPersona(id).orElse(null);
+        boolean usuarioRecienCreado = false;
+
+        // REGLA: si pasa de CONDUCTOR (o cualquier otro tipo) a ADMINISTRATIVO y todavia no tiene Usuario, se lo creamos --
+        // mismo comportamiento que en crear(), reutilizando el mismo metodo privado para no duplicar la logica de nemotecnia
+        if (personaActualizada.getTipoPersona() == TipoPersona.ADMINISTRATIVO && usuario == null) {
+            usuario = crearUsuarioParaPersona(personaActualizada);
+            usuarioRecienCreado = true;
+        }
+
+        // incluirPassword = true SOLO si el usuario se creo en este mismo llamado -- es la unica vez que se puede mostrar
+        return PersonaMapper.toResponseDTO(personaActualizada, usuario, usuarioRecienCreado);
     }
 
     private Persona buscarPersonaOLanzar(Long id) {
