@@ -1,26 +1,24 @@
 package com.utolima.vehiculosdocumentosapi.repository;
 
-import java.util.List;
+import com.utolima.vehiculosdocumentosapi.model.Persona;
+import com.utolima.vehiculosdocumentosapi.model.VehiculoPersona;
+import com.utolima.vehiculosdocumentosapi.model.enums.EstadoConductor;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.utolima.vehiculosdocumentosapi.model.VehiculoPersona;
-import com.utolima.vehiculosdocumentosapi.model.VehiculoPersonaId;
-
-import com.utolima.vehiculosdocumentosapi.model.Persona;
-import com.utolima.vehiculosdocumentosapi.model.enums.EstadoConductor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-public interface VehiculoPersonaRepository extends JpaRepository<VehiculoPersona, VehiculoPersonaId> {
+import java.util.List;
+import java.util.Optional;
 
-    // Vehiculo si tiene un campo llamado "id" (de la Entrega 1), asi que esta funciona tal cual
-	List<VehiculoPersona> findByVehiculo_Id(Long idVehiculo);
+@Repository
+public interface VehiculoPersonaRepository extends JpaRepository<VehiculoPersona, Object> {
 
-    // Persona tiene su PK llamada "idPersona", NO "id" por eso el nombre del metodo cambia
+    @Query("SELECT vp FROM VehiculoPersona vp WHERE vp.vehiculo.idVehiculo = :idVehiculo AND vp.persona.idPersona = :idPersona")
+    Optional<VehiculoPersona> findByVehiculoAndPersona(@Param("idVehiculo") Long idVehiculo, @Param("idPersona") Long idPersona);
+
+    List<Persona> findPersonasPorEstadoConductor(EstadoConductor puedeOperar);
     List<VehiculoPersona> findByPersona_IdPersona(Long idPersona);
-
- // "todos los conductores que puedan operar" = personas con AL MENOS una asociacion en estado PO
-    @Query("SELECT DISTINCT vp.persona FROM VehiculoPersona vp WHERE vp.estadoConductor = :estado")
-    List<Persona> findPersonasPorEstadoConductor(@Param("estado") EstadoConductor estado);
+    List<VehiculoPersona> findByVehiculo_Id(Long idVehiculo);
 }

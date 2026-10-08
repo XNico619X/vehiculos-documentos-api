@@ -71,11 +71,14 @@ public class VehiculoPersonaServiceImpl implements VehiculoPersonaService {
 
     @Override
     public List<VehiculoPersona> listarConductoresDeVehiculo(Long idVehiculo) {
-        return vehiculoPersonaRepository.findByVehiculo_Id(idVehiculo);
+        return vehiculoPersonaRepository.findAll().stream()
+            .filter(vp -> vp.getVehiculo() != null
+                && idVehiculo.equals(vp.getVehiculo().getId()))
+            .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
     public List<VehiculoPersona> listarVehiculosDeConductor(Long idPersona) {
-        return vehiculoPersonaRepository.findByPersona_IdPersona(idPersona); 
+        return vehiculoPersonaRepository.findByPersona_IdPersona(idPersona);
     }
 }
