@@ -3,6 +3,8 @@ package com.utolima.vehiculosdocumentosapi.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.utolima.vehiculosdocumentosapi.model.VehiculoDocumento;
 import com.utolima.vehiculosdocumentosapi.model.VehiculoDocumentoId;
@@ -16,4 +18,7 @@ public interface VehiculoDocumentoRepository extends JpaRepository<VehiculoDocum
 
     // Todos los registros de la tabla puente para un documento dado
     List<VehiculoDocumento> findByDocumento_Id(Long idDocumento);
+
+    @Query("SELECT vd FROM VehiculoDocumento vd WHERE vd.vehiculo.id = :idVehiculo")
+    List<VehiculoDocumento> findByVehiculoId(@Param("idVehiculo") Long idVehiculo);
 }

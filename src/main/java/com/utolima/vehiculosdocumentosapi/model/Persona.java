@@ -1,5 +1,7 @@
 package com.utolima.vehiculosdocumentosapi.model;
 
+import java.time.LocalDate;
+
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoIdentificacion;
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoPersona;
 
@@ -35,4 +37,11 @@ public class Persona {
 
     @Column(name = "tipo_persona", nullable = false)
     private TipoPersona tipoPersona;
+
+    @Lob
+    @Column(name = "licencia_conduccion", columnDefinition = "BLOB")
+    private String licenciaConduccion;
+
+    @Column(name = "fecha_vigencia_licencia")
+    private LocalDate fechaVigenciaLicencia;
 }
