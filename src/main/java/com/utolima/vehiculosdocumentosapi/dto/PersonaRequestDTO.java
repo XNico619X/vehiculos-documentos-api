@@ -1,5 +1,7 @@
 package com.utolima.vehiculosdocumentosapi.dto;
 
+import java.time.LocalDate;
+
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoIdentificacion;
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoPersona;
 
@@ -32,4 +34,8 @@ public class PersonaRequestDTO {
 
     @NotNull
     private TipoPersona tipoPersona;
+    
+ // Solo aplican si tipoPersona = C (CONDUCTOR); ambos son opcionales
+    private String licenciaConduccionBase64; // el PDF de la licencia en Base64
+    private LocalDate fechaVigenciaLicencia;
 }

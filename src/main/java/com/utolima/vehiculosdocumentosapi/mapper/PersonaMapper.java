@@ -17,6 +17,8 @@ public class PersonaMapper {
         dto.setApellidos(persona.getApellidos());
         dto.setCorreoElectronico(persona.getCorreoElectronico());
         dto.setTipoPersona(persona.getTipoPersona());
+        dto.setFechaVigenciaLicencia(persona.getFechaVigenciaLicencia());
+        dto.setTieneLicencia(persona.getLicenciaConduccion() != null && persona.getLicenciaConduccion().length > 0);
 
         if (usuario != null) {
             UsuarioResponseDTO usuarioDTO = new UsuarioResponseDTO();

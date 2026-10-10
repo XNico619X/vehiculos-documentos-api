@@ -39,8 +39,8 @@ public class Persona {
     private TipoPersona tipoPersona;
 
     @Lob
-    @Column(name = "licencia_conduccion", columnDefinition = "BLOB")
-    private String licenciaConduccion;
+    @Column(name = "licencia_conduccion", columnDefinition = "LONGBLOB")
+    private byte[] licenciaConduccion; // byte[] y no String: así Hibernate espera un BLOB, igual que en VehiculoDocumento
 
     @Column(name = "fecha_vigencia_licencia")
     private LocalDate fechaVigenciaLicencia;

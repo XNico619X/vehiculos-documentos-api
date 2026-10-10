@@ -45,4 +45,10 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = new ErrorResponseDTO(LocalDateTime.now(), 400, ex.getMessage(), null);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(ReglaNegocioException.class)
+    public ResponseEntity<ErrorResponseDTO> manejarReglaNegocio(ReglaNegocioException ex) {
+        ErrorResponseDTO error = new ErrorResponseDTO(LocalDateTime.now(), 400, ex.getMessage(), null);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    
 }

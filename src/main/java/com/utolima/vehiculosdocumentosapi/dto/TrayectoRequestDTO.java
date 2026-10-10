@@ -12,7 +12,6 @@ public class TrayectoRequestDTO {
     private String codigoRuta;
     private String ubicacion;
     private Integer ordenParada;
-    private BigDecimal latitud; // Puede ser null al inicio, se llena con el API de Google Maps después
-    private BigDecimal longitud; // Puede ser null al inicio
-    private String loginUsuario;
+    private BigDecimal latitud;   // opcional: si no viene, la tarea de Google Maps la completa
+    private BigDecimal longitud;  // opcional
 }

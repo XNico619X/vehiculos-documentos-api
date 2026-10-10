@@ -1,4 +1,4 @@
-package com.utolima.vehiculosdocumentosapi.model;
+ package com.utolima.vehiculosdocumentosapi.model;
 
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoCombustible;
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoServicio;

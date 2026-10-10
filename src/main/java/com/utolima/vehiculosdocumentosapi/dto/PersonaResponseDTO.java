@@ -1,5 +1,7 @@
 package com.utolima.vehiculosdocumentosapi.dto;
 
+import java.time.LocalDate;
+
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoIdentificacion;
 import com.utolima.vehiculosdocumentosapi.model.enums.TipoPersona;
 
@@ -20,4 +22,6 @@ public class PersonaResponseDTO {
 
     // null si tipoPersona es CONDUCTOR — solo trae datos si es ADMINISTRATIVO
     private UsuarioResponseDTO usuario;
+    private LocalDate fechaVigenciaLicencia;
+    private boolean tieneLicencia; // no devolvemos el PDF completo en cada consulta: pesaría muchísimo
 }

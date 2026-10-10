@@ -9,11 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.utolima.vehiculosdocumentosapi.dto.PersonaRequestDTO;
 import com.utolima.vehiculosdocumentosapi.dto.PersonaResponseDTO;
 import com.utolima.vehiculosdocumentosapi.exception.RecursoNoEncontradoException;
+import com.utolima.vehiculosdocumentosapi.exception.ReglaNegocioException;
 import com.utolima.vehiculosdocumentosapi.mapper.PersonaMapper;
 import com.utolima.vehiculosdocumentosapi.model.Persona;
-import com.utolima.vehiculosdocumentosapi.model.enums.TipoPersona;
 import com.utolima.vehiculosdocumentosapi.model.Usuario;
 import com.utolima.vehiculosdocumentosapi.model.UsuarioId;
+import com.utolima.vehiculosdocumentosapi.model.enums.TipoPersona;
 import com.utolima.vehiculosdocumentosapi.repository.PersonaRepository;
 import com.utolima.vehiculosdocumentosapi.repository.UsuarioRepository;
 
@@ -39,6 +40,7 @@ public class PersonaServiceImpl implements PersonaService {
         persona.setApellidos(dto.getApellidos());
         persona.setCorreoElectronico(dto.getCorreoElectronico());
         persona.setTipoPersona(dto.getTipoPersona());
+        aplicarDatosLicencia(persona, dto);
 
         Persona personaGuardada = personaRepository.save(persona);
 
@@ -81,6 +83,7 @@ public class PersonaServiceImpl implements PersonaService {
         persona.setApellidos(dto.getApellidos());
         persona.setCorreoElectronico(dto.getCorreoElectronico());
         persona.setTipoPersona(dto.getTipoPersona());
+        aplicarDatosLicencia(persona, dto);
 
         Persona personaActualizada = personaRepository.save(persona);
 
@@ -128,5 +131,33 @@ public class PersonaServiceImpl implements PersonaService {
 
     private String generarApikey() {
         return UUID.randomUUID().toString();
+    }
+ // Aplica los datos de licencia del request sobre la entidad, con sus validaciones
+    private void aplicarDatosLicencia(Persona persona, PersonaRequestDTO dto) {
+        boolean traeLicencia = dto.getLicenciaConduccionBase64() != null && !dto.getLicenciaConduccionBase64().isBlank();
+        boolean traeFecha = dto.getFechaVigenciaLicencia() != null;
+
+        // el PDF dice que estos campos "aplican cuando la persona es tipo conductor"
+        if ((traeLicencia || traeFecha) && persona.getTipoPersona() != TipoPersona.CONDUCTOR) {
+            throw new ReglaNegocioException("La licencia de conducción solo aplica a personas de tipo CONDUCTOR.");
+        }
+
+        if (traeLicencia) {
+            String base64 = dto.getLicenciaConduccionBase64().trim();
+            if (!base64.startsWith("JVBERi0")) { // "%PDF-" codificado en Base64
+                throw new ReglaNegocioException("La licencia debe ser un PDF en Base64 válido.");
+            }
+            try {
+                java.util.Base64.getDecoder().decode(base64); // solo comprueba que sea Base64 válido
+            } catch (IllegalArgumentException e) {
+                throw new ReglaNegocioException("El texto de la licencia no es Base64 válido.");
+            }
+            // se guarda el texto Base64 tal cual dentro de la columna LONGBLOB, igual que documento_base64
+            persona.setLicenciaConduccion(base64.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        // si en un PUT no vienen estos campos, se conservan los valores que ya tenía (no se borran)
+        if (traeFecha) {
+            persona.setFechaVigenciaLicencia(dto.getFechaVigenciaLicencia());
+        }
     }
 }
