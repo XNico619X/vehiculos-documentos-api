@@ -28,4 +28,24 @@ public interface TrayectoRepository extends JpaRepository<Trayecto, Long> {
     @Transactional  // un UPDATE necesita transacción; la declaramos aquí porque el scheduler no abre ninguna
     @Query("UPDATE Trayecto t SET t.latitud = :lat, t.longitud = :lng WHERE t.idTrayecto = :id")
     int actualizarCoordenadas(@Param("id") Long id, @Param("lat") BigDecimal lat, @Param("lng") BigDecimal lng);
+        // ===================== PARTE 3: CONSULTAS DE RUTAS =====================
+
+    // CONSULTA 2: códigos de ruta de un conductor, sin repetir.
+    // - DISTINCT: un conductor tiene varios trayectos por ruta (uno por parada); sin esto el código saldría repetido.
+    // - t.conductor.identificacion: navega Trayecto -> Persona y filtra por el número de documento
+    //   (el campo "identificacion", no el id de la tabla), como pide el enunciado.
+    // - Devuelve List<String> porque solo seleccionamos una columna, no la entidad completa.
+    @Query("SELECT DISTINCT t.codigoRuta FROM Trayecto t " +
+           "WHERE t.conductor.identificacion = :identificacion " +
+           "ORDER BY t.codigoRuta")
+    List<String> findCodigosRutaPorIdentificacionConductor(@Param("identificacion") String identificacion);
+
+    // CONSULTA 3: trayectos de un vehículo por su placa, con el conductor ya cargado.
+    // - JOIN FETCH t.conductor: trae el conductor en la MISMA consulta. Como la relación es LAZY,
+    //   sin esto Hibernate haría una consulta extra por cada fila (problema "N+1").
+    // - Ordenamos por ruta y luego por parada; en el servicio los agruparemos por código de ruta.
+    @Query("SELECT t FROM Trayecto t JOIN FETCH t.conductor " +
+           "WHERE t.vehiculo.placa = :placa " +
+           "ORDER BY t.codigoRuta ASC, t.ordenParada ASC")
+    List<Trayecto> findTrayectosPorPlacaConConductor(@Param("placa") String placa);
 }

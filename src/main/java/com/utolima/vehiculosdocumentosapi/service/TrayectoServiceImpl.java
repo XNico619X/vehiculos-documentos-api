@@ -1,4 +1,6 @@
+
 package com.utolima.vehiculosdocumentosapi.service;
+
 
 import java.util.HashSet;
 import java.util.List;
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.utolima.vehiculosdocumentosapi.dto.TrayectoRequestDTO;
+import com.utolima.vehiculosdocumentosapi.dto.TrayectoResponseDTO;
+import com.utolima.vehiculosdocumentosapi.mapper.TrayectoMapper;
 import com.utolima.vehiculosdocumentosapi.exception.PersonaNoEsConductorException;
 import com.utolima.vehiculosdocumentosapi.exception.RecursoNoEncontradoException;
 import com.utolima.vehiculosdocumentosapi.exception.ReglaNegocioException;
@@ -151,5 +155,21 @@ public class TrayectoServiceImpl implements TrayectoService {
 
     private boolean esVacio(String texto) {
         return texto == null || texto.isBlank();
+    }
+        // CONSULTA 1: devuelve las paradas de una ruta, ya ordenadas.
+    // readOnly = true: solo lee (más liviano) y mantiene la sesión abierta mientras el mapper
+    // toca las relaciones LAZY (conductor y vehículo). Sin transacción, eso fallaría.
+    @Override
+    @Transactional(readOnly = true)
+    public List<TrayectoResponseDTO> consultarRutaPorCodigo(String codigoRuta) {
+        // Método que ya existía en el repositorio: filtra por código y ordena por ordenParada ascendente
+        List<Trayecto> trayectos = trayectoRepository.findByCodigoRutaOrderByOrdenParadaAsc(codigoRuta);
+
+        // Si no hay ninguna parada, la ruta no existe -> el manejador global lo convierte en HTTP 404
+        if (trayectos.isEmpty()) {
+            throw new RecursoNoEncontradoException("No existe una ruta con el código " + codigoRuta);
+        }
+
+        return TrayectoMapper.toResponseDTOList(trayectos); // entidades -> DTOs, nunca devolvemos entidades
     }
 }
