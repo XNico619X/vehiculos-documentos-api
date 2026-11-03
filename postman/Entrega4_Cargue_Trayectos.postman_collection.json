@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a4e8c910-7b2d-4f3a-9c1e-8d2f4b6a1e04",
     "name": "Entrega 4 - Cargue Masivo de Trayectos (.xlsx)",
-    "description": "Colección para probar el cargue de archivos Excel (.xlsx) de trayectos con Apache POI y JdbcTemplate.",
+    "description": "Coleccion de pruebas para el cargue masivo de trayectos desde archivos Excel (.xlsx) usando Apache POI y JdbcTemplate.\n\n### INSTRUCCIONES DE CONFIGURACION:\n1. Configura en las variables de esta coleccion:\n   - `baseUrl`: URL base de la API (por defecto `http://localhost:8080`).\n   - `login`: Login del usuario de tu base de datos.\n   - `password`: Contraseña del usuario.\n   - `apiKey`: APIKey registrada en la tabla `usuario` para ese login.\n2. Ejecuta primero la peticion `1. Login`: el script de test extraera el token JWT y lo asignara automaticamente a la variable `jwtToken`.\n\n### ARCHIVOS EXCEL DE PRUEBA:\n- Para generar los archivos de prueba en la carpeta `postman/`, ejecuta la clase `GenerarExcelPrueba.java` (ubicada en `src/test/java/...`) haciendo clic derecho -> `Run Java Application`.\n- NOTA: Los archivos generados utilizan `id_persona=1` e `id_vehiculo=1` (datos de prueba de la base local). Si pruebas en otra base, asegurate de que dicho conductor este en estado 'PO' y el vehiculo tenga documentos 'Habilitados'.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -12,13 +12,23 @@
       "type": "string"
     },
     {
-      "key": "jwtToken",
+      "key": "login",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "password",
       "value": "",
       "type": "string"
     },
     {
       "key": "apiKey",
-      "value": "2840d3c9-2ac2-44a8-ab91-665e134fe5c1",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "",
       "type": "string"
     },
     {
@@ -57,7 +67,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"login\": \"ag9998887771\",\n  \"password\": \"2ab43a6b\"\n}"
+          "raw": "{\n  \"login\": \"{{login}}\",\n  \"password\": \"{{password}}\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/auth/login",
@@ -70,12 +80,32 @@
             "login"
           ]
         },
-        "description": "Autentica al usuario ag9998887771 y guarda automáticamente el token JWT en la variable de colección `{{jwtToken}}`."
+        "description": "Autentica al usuario usando las variables {{login}} y {{password}} y guarda el token retornado en {{jwtToken}}."
       },
       "response": []
     },
     {
       "name": "2. Cargar Archivo Excel (.xlsx) - Exitoso (201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Estado HTTP es 201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test(\"Estructura de respuesta contiene idCargue, totalFilas y resumen\", function () {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data).to.have.property('idCargue');",
+              "    pm.expect(data).to.have.property('totalFilas');",
+              "    pm.expect(data).to.have.property('resumen');",
+              "    pm.expect(data.resumen).to.have.keys('CARGADO', 'VALIDADO', 'PROCESADO', 'ERROR');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -97,7 +127,7 @@
               "key": "archivo",
               "type": "file",
               "src": [],
-              "description": "Selecciona aquí postman/cargue_exitoso.xlsx o postman/cargue_mixto.xlsx"
+              "description": "Selecciona postman/cargue_exitoso.xlsx generado con GenerarExcelPrueba"
             }
           ]
         },
@@ -112,12 +142,72 @@
             "cargues"
           ]
         },
-        "description": "Sube el archivo Excel (.xlsx) con la hoja 'Trayectos', ejecuta sp_cargue, sp_validacion y sp_procesado, y retorna HTTP 201 con el CargueResultadoDTO."
+        "description": "Sube un archivo Excel valido con paradas correctas. Retorna 201 Created con el resumen de paradas en estado PROCESADO."
       },
       "response": []
     },
     {
-      "name": "3. Verificar Ruta Procesada en Trayectos (200)",
+      "name": "3. Cargar Archivo Excel (.xlsx) - Mixto (201 con PROCESADO y ERROR)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Estado HTTP es 201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test(\"El resumen refleja paradas en PROCESADO y paradas en ERROR\", function () {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.resumen.PROCESADO).to.be.above(0);",
+              "    pm.expect(data.resumen.ERROR).to.be.above(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "archivo",
+              "type": "file",
+              "src": [],
+              "description": "Selecciona postman/cargue_mixto.xlsx generado con GenerarExcelPrueba"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/trayectos/cargues",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "trayectos",
+            "cargues"
+          ]
+        },
+        "description": "Prueba con un archivo que contiene una ruta valida y una ruta con errores (parada unica y conductor no existente)."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Consultar Ruta Procesada en Trayectos (200)",
       "request": {
         "method": "GET",
         "header": [
@@ -144,12 +234,25 @@
             "{{codigoRuta}}"
           ]
         },
-        "description": "Consulta en la tabla definitiva `trayecto` una ruta que haya quedado en estado PROCESADO."
+        "description": "Verifica en la tabla definitiva trayecto que la ruta cargada quedo registrada con todas sus paradas ordenadas."
       },
       "response": []
     },
     {
-      "name": "4. Prueba Error 401 - Sin Token JWT",
+      "name": "5. Prueba 401 - Petición sin token JWT",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Estado HTTP es 401 Unauthorized\", function () {",
+              "    pm.response.to.have.status(401);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [],
@@ -174,7 +277,297 @@
             "cargues"
           ]
         },
-        "description": "Verifica que el endpoint está protegido por Spring Security (debe responder 401 Unauthorized)."
+        "description": "Verifica que Spring Security rechaza llamadas sin cabecera de autorizacion (401 Unauthorized)."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Prueba 400 - Sin archivo o archivo vacío",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Estado HTTP es 400 Bad Request\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "archivo",
+              "value": "",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/trayectos/cargues",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "trayectos",
+            "cargues"
+          ]
+        },
+        "description": "Verifica que el servicio valida archivo nulo o vacio y lanza ReglaNegocioException (400 Bad Request)."
+      },
+      "response": []
+    },
+    {
+      "name": "7. Prueba 400 - Archivo PDF renombrado como .xlsx",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Estado HTTP es 400 Bad Request\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test(\"Mensaje indica que no es un Excel valido\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(JSON.stringify(json)).to.include(\"El archivo no es un Excel .xlsx válido\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "archivo",
+              "type": "file",
+              "src": [],
+              "description": "Selecciona cualquier archivo PDF o de texto renombrado con extension .xlsx"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/trayectos/cargues",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "trayectos",
+            "cargues"
+          ]
+        },
+        "description": "Verifica que las excepciones internas de POI al parsear un binario no valido son capturadas y devuelven 400 Bad Request en lugar de 500."
+      },
+      "response": []
+    },
+    {
+      "name": "8. Prueba 400 - Excel con encabezados inválidos",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Estado HTTP es 400 Bad Request\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test(\"Mensaje detalla encabezado invalido\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(JSON.stringify(json)).to.include(\"Encabezado inválido\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "archivo",
+              "type": "file",
+              "src": [],
+              "description": "Selecciona postman/cargue_encabezado_invalido.xlsx generado con GenerarExcelPrueba"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/trayectos/cargues",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "trayectos",
+            "cargues"
+          ]
+        },
+        "description": "Verifica que el servicio valida los 7 nombres exactos de encabezado y responde 400 Bad Request."
+      },
+      "response": []
+    },
+    {
+      "name": "9. Prueba 400 - Archivo con más de 500 filas de datos",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Estado HTTP es 400 Bad Request\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test(\"Mensaje indica limite de 500 filas\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(JSON.stringify(json)).to.include(\"500 filas de datos\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "archivo",
+              "type": "file",
+              "src": [],
+              "description": "Selecciona postman/cargue_mas_de_500_filas.xlsx generado con GenerarExcelPrueba"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/trayectos/cargues",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "trayectos",
+            "cargues"
+          ]
+        },
+        "description": "Verifica el rechazo con 400 Bad Request cuando el archivo excede las 500 filas de datos permitidas."
+      },
+      "response": []
+    },
+    {
+      "name": "10. Prueba 400 - Concurrencia (Segundo cargue en el mismo minuto)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Estado HTTP es 400 Bad Request\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test(\"Mensaje advierte cargue en este minuto\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(JSON.stringify(json)).to.include(\"Ya hay un cargue en este minuto\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "archivo",
+              "type": "file",
+              "src": [],
+              "description": "Selecciona postman/cargue_exitoso.xlsx"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/trayectos/cargues",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "trayectos",
+            "cargues"
+          ]
+        },
+        "description": "Al reenviar inmediatamente un cargue dentro del mismo minuto del anterior, se valida el control de concurrencia y se retorna 400 Bad Request."
       },
       "response": []
     }
