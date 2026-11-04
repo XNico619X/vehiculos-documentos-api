@@ -129,7 +129,7 @@ export function montar(contenedor, { navegar }) {
     function crearParada(valores = {}) {
         const n = ++contadorIds;
         const ubicacion = crearCampo({ nombre: `ubicacion-${n}`, etiqueta: "Ubicación", requerido: true, valor: valores.ubicacion ?? "",
-            placeholder: "Ej. Plaza de Bolívar, Ibagué, Tolima", atributos: { autocomplete: "off", maxlength: "500" } });
+            placeholder: "Ej. Plaza de Bolívar, Ibagué, Tolima", atributos: { autocomplete: "off", maxlength: "255" } }); // 255 = ancho de la columna ubicacion en trayecto
         const latitud = crearCampo({ nombre: `latitud-${n}`, etiqueta: "Latitud", tipo: "number", valor: valores.latitud ?? "",
             atributos: { step: "any", min: "-90", max: "90", inputmode: "decimal" } });
         const longitud = crearCampo({ nombre: `longitud-${n}`, etiqueta: "Longitud", tipo: "number", valor: valores.longitud ?? "",
