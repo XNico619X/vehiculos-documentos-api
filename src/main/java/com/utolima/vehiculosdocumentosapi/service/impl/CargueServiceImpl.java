@@ -193,40 +193,6 @@ public class CargueServiceImpl implements CargueService {
     /**
      * Paso 3: Permite consultar el estado actual del cargue por su idCargue.
      */
-    @Override
-    @Transactional(readOnly = true)
-    public CargueResultadoDTO consultarProgreso(Long idCargue) {
-        Long totalFilas = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM trayecto_tmp WHERE id_cargue = ?",
-                Long.class,
-                idCargue
-        );
-
-        if (totalFilas == null || totalFilas == 0) {
-            throw new RecursoNoEncontradoException("No se encontró ningún cargue con id " + idCargue);
-        }
-
-        Map<String, Long> resumen = new LinkedHashMap<>();
-        resumen.put("CARGADO", 0L);
-        resumen.put("VALIDADO", 0L);
-        resumen.put("PROCESADO", 0L);
-        resumen.put("ERROR", 0L);
-
-        jdbcTemplate.query(
-                "SELECT estado, COUNT(*) FROM trayecto_tmp WHERE id_cargue = ? GROUP BY estado",
-                rs -> {
-                    String estado = rs.getString(1);
-                    long cantidad = rs.getLong(2);
-                    if (estado != null) {
-                        resumen.put(estado, cantidad);
-                    }
-                },
-                idCargue
-        );
-
-        return new CargueResultadoDTO(idCargue, totalFilas.intValue(), resumen);
-    }
-
     private void validarEncabezados(Row filaEncabezado, DataFormatter dataFormatter) {
         if (filaEncabezado == null) {
             throw new ReglaNegocioException("La fila 1 de encabezados no existe en la hoja 'Trayectos'.");
@@ -283,4 +249,14 @@ public class CargueServiceImpl implements CargueService {
         }
         throw new ReglaNegocioException("No se pudo identificar al usuario autenticado.");
     }
+ // Se usa cuando RabbitMQ agoto los reintentos: deja el fallo VISIBLE para quien consulta el cargue.
+ // Solo toca filas que no terminaron (CARGADO o VALIDADO); lo ya procesado no se modifica.
+ @Override
+ @Transactional
+ public void marcarCargueFallido(Long idCargue, String motivo) {
+     jdbcTemplate.update(
+             "UPDATE trayecto_tmp SET estado = 'ERROR', observacion = CONCAT_WS('; ', observacion, ?) "
+                     + "WHERE id_cargue = ? AND estado IN ('CARGADO', 'VALIDADO')",
+             motivo, idCargue);
+ }
 }

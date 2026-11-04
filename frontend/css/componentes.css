@@ -1,0 +1,566 @@
+/* ============================================================================
+   componentes.css · PIEZAS REUTILIZABLES
+   ============================================================================
+   Botones, campos de formulario, tarjetas, etiquetas de estado, tablas, avisos
+   (toasts), diálogos y bloques de carga/vacío/error. Las vistas NO inventan
+   estilos propios para esto: usan estas clases (así toda la app se ve igual).
+   ========================================================================= */
+
+/* ------------------------------ BOTONES ----------------------------------
+   Estilo "píldora" (bordes totalmente redondeados).
+     .boton--primario  lima con texto negro  (la acción principal de la pantalla)
+     .boton--contorno  solo borde            (acciones secundarias)
+     .boton--peligro   contorno rojo         (eliminar, regenerar...)
+     .boton--chico     versión compacta (tablas, cabecera)
+   Funciona igual en <button> y en <a class="boton">.                         */
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    padding: .85rem 1.6rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font: inherit;
+    font-size: .74rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform .25s var(--suave), box-shadow .25s var(--suave),
+        background-color .2s, border-color .2s, color .2s;
+}
+
+.boton:hover {
+    transform: translateY(-1px);
+}
+
+.boton:active {
+    transform: translateY(0);
+}
+
+.boton--primario {
+    background: var(--lima);
+    color: var(--negro);
+}
+
+.boton--primario:hover {
+    color: var(--negro);
+    box-shadow: 0 10px 34px -10px rgba(212, 255, 36, .65);
+}
+
+.boton--contorno {
+    background: transparent;
+    color: var(--texto);
+    border-color: var(--linea-fuerte);
+}
+
+.boton--contorno:hover {
+    color: var(--lima);
+    border-color: var(--lima);
+}
+
+.boton--peligro {
+    background: transparent;
+    color: var(--error);
+    border-color: rgba(255, 123, 123, .5);
+}
+
+.boton--peligro:hover {
+    color: var(--negro);
+    background: var(--error);
+    border-color: var(--error);
+}
+
+.boton--chico {
+    padding: .55rem 1.05rem;
+    font-size: .68rem;
+}
+
+.boton--bloque {
+    width: 100%;
+}
+
+/* Deshabilitado / "ocupado". Se usa aria-disabled (y no el atributo disabled)
+   para que el botón NO pierda el foco mientras envía (mejor para teclado y
+   lector de pantalla). formulario.js se encarga de ignorar los clics. */
+.boton[aria-disabled="true"],
+.boton:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Indicador de carga dentro del botón mientras envía */
+.boton[aria-busy="true"]::before {
+    content: "";
+    width: .9em;
+    height: .9em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: girar .7s linear infinite;
+}
+
+/* ------------------------------ CAMPOS -----------------------------------
+   Estructura que genera ui/formulario.js:
+     <div class="campo">
+       <label>…</label>
+       <input> | <select> | <textarea>
+       <p class="campo-ayuda">…</p>
+       <p class="campo-error">…</p>       (enlazado con aria-describedby)
+     </div>                                                                     */
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    min-width: 0;
+}
+
+.campo label,
+.campo-etiqueta {
+    font-size: .72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--texto-suave);
+}
+
+.campo .req {
+    color: var(--lima);
+}
+
+/* 16px mínimo: evita que iOS haga zoom automático al enfocar el campo */
+.campo input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.campo select,
+.campo textarea,
+.entrada {
+    width: 100%;
+    padding: .8rem 1.05rem;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--texto);
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--linea-fuerte);
+    border-radius: 14px;
+    transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+
+.campo textarea {
+    min-height: 6.5rem;
+    resize: vertical;
+}
+
+.campo input::placeholder,
+.campo textarea::placeholder {
+    color: var(--texto-tenue);
+}
+
+.campo input:hover,
+.campo select:hover,
+.campo textarea:hover {
+    border-color: rgba(255, 255, 255, .42);
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+    outline: none;
+    border-color: var(--lima);
+    box-shadow: 0 0 0 3px rgba(212, 255, 36, .22);
+    background: rgba(255, 255, 255, .06);
+}
+
+/* Campo con error: borde rojo + el texto del error debajo */
+.campo [aria-invalid="true"] {
+    border-color: var(--error) !important;
+}
+
+.campo-ayuda {
+    font-size: .82rem;
+    color: var(--texto-tenue);
+}
+
+.campo-error {
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--error);
+}
+
+.campo input[type="checkbox"],
+.campo input[type="radio"] {
+    accent-color: var(--lima);
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.campo--casilla {
+    flex-direction: row;
+    align-items: center;
+    gap: .7rem;
+}
+
+.campo--casilla label {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: .95rem;
+    color: var(--texto);
+}
+
+/* Input de archivo: el botón nativo se estiliza como un botón píldora */
+.campo input[type="file"] {
+    font: inherit;
+    font-size: .9rem;
+    color: var(--texto-suave);
+}
+
+.campo input[type="file"]::file-selector-button {
+    margin-right: 1rem;
+    padding: .55rem 1.05rem;
+    font: inherit;
+    font-size: .68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--texto);
+    background: transparent;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+/* ---- Formulario: rejilla y zonas ---- */
+.formulario {
+    display: grid;
+    gap: 1.25rem;
+}
+
+/* Dos o más campos en una fila (se apilan solos en pantallas pequeñas) */
+.formulario-fila {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.formulario-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: center;
+}
+
+/* Error GENERAL del formulario (el que no pertenece a un campo concreto).
+   role="alert": el lector de pantalla lo anuncia apenas aparece. */
+.formulario-error {
+    padding: .9rem 1.1rem;
+    font-size: .92rem;
+    color: var(--error);
+    background: rgba(255, 123, 123, .08);
+    border: 1px solid rgba(255, 123, 123, .35);
+    border-radius: var(--radio-chico);
+}
+
+.formulario-error ul {
+    margin: .4rem 0 0;
+    padding-left: 1.2rem;
+}
+
+/* Mensaje en línea (resultado de una consulta, estado de un proceso) */
+.mensaje {
+    min-height: 1.4em;
+    font-size: .92rem;
+    color: var(--texto-suave);
+}
+
+.mensaje--error {
+    color: var(--error);
+}
+
+.mensaje--ok {
+    color: var(--ok);
+}
+
+/* ------------------------------ TARJETAS ---------------------------------
+   Esquinas redondeadas, borde fino y un degradado cobalto muy sutil.          */
+.tarjeta {
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: linear-gradient(180deg, var(--cobalto-velo), rgba(21, 88, 201, .04));
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-grande);
+}
+
+/* Tarjeta que reacciona al pasar el mouse (botones de consulta, tarjetas de ruta...) */
+.tarjeta--interactiva {
+    transition: transform .3s var(--suave), border-color .3s, background-color .3s;
+}
+
+.tarjeta--interactiva:hover {
+    transform: translateY(-3px);
+    border-color: rgba(212, 255, 36, .55);
+}
+
+.rejilla-tarjetas {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+}
+
+/* ----------------------- ETIQUETAS DE ESTADO (chips) ----------------------
+   Habilitado = ok (verde) · En verificación = aviso (amarillo) · Vencido = error (rojo)
+   El color NUNCA va solo: siempre lleva texto (accesibilidad para daltonismo). */
+.etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .25rem .75rem;
+    font-size: .66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    white-space: nowrap;
+    color: var(--texto-suave);
+    border: 1px solid var(--linea-fuerte);
+    border-radius: 999px;
+}
+
+/* Puntico de color antes del texto */
+.etiqueta::before {
+    content: "";
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.etiqueta--ok {
+    color: var(--ok);
+    border-color: rgba(126, 231, 135, .4);
+    background: rgba(126, 231, 135, .08);
+}
+
+.etiqueta--aviso {
+    color: var(--aviso);
+    border-color: rgba(255, 204, 102, .4);
+    background: rgba(255, 204, 102, .08);
+}
+
+.etiqueta--error {
+    color: var(--error);
+    border-color: rgba(255, 123, 123, .4);
+    background: rgba(255, 123, 123, .08);
+}
+
+.etiqueta--info {
+    color: var(--cobalto-claro);
+    border-color: rgba(141, 180, 255, .4);
+    background: rgba(141, 180, 255, .08);
+}
+
+.etiqueta--lima {
+    color: var(--lima);
+    border-color: rgba(212, 255, 36, .45);
+    background: rgba(212, 255, 36, .07);
+}
+
+/* ------------------------------ TABLAS -----------------------------------
+   El contenedor tiene scroll horizontal: en el celular la tabla se desplaza
+   dentro de su caja y NO rompe el ancho de la página.                         */
+.tabla-contenedor {
+    overflow-x: auto;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: rgba(8, 14, 31, .6);
+}
+
+.tabla {
+    width: 100%;
+    min-width: 38rem;
+    border-collapse: collapse;
+    font-size: .95rem;
+}
+
+.tabla th {
+    padding: 1rem 1.1rem;
+    font-size: .68rem;
+    font-weight: 500;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--texto-tenue);
+    border-bottom: 1px solid var(--linea-fuerte);
+    white-space: nowrap;
+}
+
+.tabla td {
+    padding: .9rem 1.1rem;
+    border-bottom: 1px solid var(--linea);
+    vertical-align: middle;
+}
+
+.tabla tbody tr {
+    transition: background-color .2s;
+}
+
+.tabla tbody tr:hover {
+    background: var(--cobalto-velo);
+}
+
+.tabla tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.tabla .celda-acciones {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.tabla .der {
+    text-align: right;
+}
+
+.tabla .mono {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ----------------- AVISOS (toasts, abajo a la derecha) ------------------- */
+.avisos {
+    position: fixed;
+    right: var(--margen-lateral);
+    bottom: 1.25rem;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    width: min(24rem, calc(100vw - 2 * var(--margen-lateral)));
+    pointer-events: none;
+    /* el contenedor no bloquea clics; cada aviso sí */
+}
+
+.aviso {
+    pointer-events: auto;
+    display: flex;
+    gap: .9rem;
+    align-items: flex-start;
+    padding: .95rem 1.1rem;
+    font-size: .92rem;
+    background: var(--superficie-alta);
+    border: 1px solid var(--linea-fuerte);
+    border-left: 3px solid var(--cobalto-claro);
+    border-radius: var(--radio-chico);
+    box-shadow: 0 18px 50px -18px rgba(0, 0, 0, .8);
+    animation: aparecer .35s var(--suave) both;
+}
+
+.aviso--ok {
+    border-left-color: var(--ok);
+}
+
+.aviso--aviso {
+    border-left-color: var(--aviso);
+}
+
+.aviso--error {
+    border-left-color: var(--error);
+}
+
+.aviso-texto {
+    flex: 1;
+}
+
+.aviso-cerrar {
+    flex: none;
+    padding: 0 .3rem;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--texto-suave);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.aviso-cerrar:hover {
+    color: var(--lima);
+}
+
+/* ------------------- DIÁLOGOS (elemento nativo <dialog>) ------------------
+   El navegador se encarga de: atrapar el foco dentro, cerrar con Esc y
+   devolver el foco al botón que lo abrió. Nosotros solo lo estilizamos.       */
+.dialogo {
+    width: min(30rem, calc(100vw - 2rem));
+    padding: 0;
+    color: var(--texto);
+    background: var(--superficie-alta);
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-grande);
+    box-shadow: 0 40px 100px -30px rgba(0, 0, 0, .9);
+}
+
+.dialogo[open] {
+    animation: aparecer .3s var(--suave) both;
+}
+
+.dialogo::backdrop {
+    background: rgba(3, 4, 7, .75);
+    backdrop-filter: blur(4px);
+}
+
+.dialogo-cuerpo {
+    display: grid;
+    gap: 1rem;
+    padding: clamp(1.4rem, 4vw, 2rem);
+}
+
+.dialogo-cuerpo h2 {
+    font-size: 1.7rem;
+}
+
+.dialogo-texto {
+    color: var(--texto-suave);
+}
+
+.dialogo-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .75rem;
+    margin-top: .5rem;
+}
+
+/* --------------- ESTADOS: cargando / vacío / error ------------------------
+   Toda vista que pide datos debe mostrar uno de estos tres mientras tanto
+   (se aplican a fondo en la Parte 7).                                         */
+.estado {
+    display: grid;
+    justify-items: center;
+    gap: .75rem;
+    padding: clamp(2rem, 6vw, 3.5rem) 1.5rem;
+    text-align: center;
+    color: var(--texto-suave);
+    border: 1px dashed var(--linea-fuerte);
+    border-radius: var(--radio);
+}
+
+.estado h3 {
+    color: var(--texto);
+}
+
+.estado--error {
+    border-color: rgba(255, 123, 123, .45);
+}
+
+.estado--error h3 {
+    color: var(--error);
+}
+
+.cargador {
+    width: 1.8rem;
+    height: 1.8rem;
+    border: 2px solid var(--linea-fuerte);
+    border-top-color: var(--lima);
+    border-radius: 50%;
+    animation: girar .8s linear infinite;
+}

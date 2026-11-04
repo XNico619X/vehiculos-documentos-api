@@ -1,179 +1,143 @@
-import { CONFIG } from "../config.js";
-import { login, apiGet, SesionExpiradaError } from "./api.js";
-import { guardarSesion, obtenerSesion, cerrarSesion, expiraEn, iniciarVigilancia } from "./session.js";
-import { iniciarMapa, dibujarRuta, limpiarMapa, enfocarParada, tieneCoordenadas, tipoDeParada } from "./mapa.js";
+// ============================================================================
+// app.js · ARRANQUE DE LA APLICACIÓN
+// ============================================================================
+// Une las piezas de la carcasa (index.html):
+//   · construye el MENÚ según haya o no sesión
+//   · muestra en la cabecera el usuario y los botones "Iniciar / Cerrar sesión"
+//   · reacciona a los cambios de sesión (token vencido, 401, cierre voluntario)
+//   · arranca el router y, en cada cambio de pantalla: título, menú activo, foco y anuncio
+//
+// Las pantallas en sí NO están aquí: viven en js/vistas/ y las carga el router.
 
-const MAX_REFRESCOS = 20; // tope de reconsultas automaticas (20 x 30 s = 10 min): no se consulta para siempre
+import { RUTAS, iniciarRouter, navegar, irALogin, rutaActual } from "./router.js";
+import { obtenerSesion, obtenerUsuario, expiraEn, cerrarSesion, iniciarVigilancia } from "./session.js";
+import { avisar, anunciar } from "./ui/mensajes.js";
 
-// --- Elementos de la pagina (se buscan una sola vez) ---
 const $ = (id) => document.getElementById(id);
-const vistaLogin = $("vista-login");
-const vistaRuta = $("vista-ruta");
-const formLogin = $("form-login");
-const campoLogin = $("campo-login");
-const campoPassword = $("campo-password");
-const mensajeLogin = $("mensaje-login");
-const formRuta = $("form-ruta");
-const campoCodigo = $("codigo-ruta");
-const mensajeRuta = $("mensaje-ruta");
-const resumen = $("resumen");
-const listaParadas = $("lista-paradas");
+const principal = $("contenido");
+const listaMenu = $("menu-lista");
+const botonMenu = $("menu-boton");
+const menu = $("menu-principal");
 const textoSesion = $("texto-sesion");
+const botonEntrar = $("btn-entrar");
 const botonSalir = $("btn-salir");
-const campoApikey = $("campo-apikey");
 
-let promesaMapa = null;
-let temporizadorRefresco = null;
+const NOMBRE_APP = "Transporte";
+let navegaciones = 0; // cuántas pantallas se han mostrado (para NO robar el foco en la primera carga)
 
-function mostrar(elemento, texto, esError = false) {
-    elemento.textContent = texto;
-    elemento.classList.toggle("error", esError);
+// ------------------------------- MENÚ ---------------------------------------
+// Las pantallas protegidas solo aparecen si hay sesión: un visitante no ve opciones que no puede usar.
+function construirMenu() {
+    const haySesion = obtenerSesion() !== null;
+    const items = RUTAS
+        .filter((r) => r.menu && (!r.protegida || haySesion))
+        .map((r) => {
+            const li = document.createElement("li");
+            const a = document.createElement("a");
+            a.className = "menu-enlace";
+            a.href = `#${r.ruta}`;
+            a.textContent = r.etiqueta;     // textContent: nunca innerHTML
+            a.dataset.ruta = r.ruta;
+            li.append(a);
+            return li;
+        });
+    listaMenu.replaceChildren(...items);
+    marcarMenuActivo();
 }
 
-// El mapa se crea la PRIMERA vez que se necesita (no antes: dentro de un div oculto tendria tamano 0)
-function asegurarMapa() {
-    if (!promesaMapa) {
-        promesaMapa = iniciarMapa($("mapa"), (mensaje) => mostrar(mensajeRuta, mensaje, true))
-            .catch((error) => { promesaMapa = null; throw error; }); // si falla, permite reintentar
-    }
-    return promesaMapa;
-}
-
-// ---------------- Vistas ----------------
-
-function mostrarLogin(mensaje = "") {
-    clearTimeout(temporizadorRefresco);
-    limpiarMapa();
-    listaParadas.replaceChildren();
-    resumen.textContent = "";
-    vistaRuta.hidden = true;
-    vistaLogin.hidden = false;
-    mostrar(mensajeLogin, mensaje, true);
-}
-
-function mostrarRutas() {
-    const sesion = obtenerSesion(); // null si no hay sesion o ya vencio
-    if (!sesion) { mostrarLogin(); return; }
-
-    vistaLogin.hidden = true;
-    vistaRuta.hidden = false;
-    const hora = expiraEn(sesion.token).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
-    textoSesion.textContent = `Sesión válida hasta las ${hora}`;
-
-    // Cuando el token venza, se vuelve al login solo, aunque el usuario no haya tocado nada
-    iniciarVigilancia(() => mostrarLogin("Tu sesión expiró. Inicia sesión de nuevo."));
-    asegurarMapa().catch((error) => mostrar(mensajeRuta, error.message, true));
-}
-
-// ---------------- Datos ----------------
-
-// Acepta tanto una lista directa de paradas como un objeto { paradas: [...] }, y las ordena por ordenParada.
-// Si la respuesta real de Tania tiene otra forma, SOLO se cambia esta funcion.
-function normalizarParadas(json) {
-    const lista = Array.isArray(json) ? json : (json.paradas ?? json.trayectos ?? []);
-    return [...lista].sort((a, b) => a.ordenParada - b.ordenParada);
-}
-
-function pintarResumen(paradas) {
-    const primera = paradas[0];
-    const conductor = primera.conductor
-        ? `${primera.conductor.nombres ?? ""} ${primera.conductor.apellidos ?? ""}`.trim() : "—";
-    const placa = primera.vehiculo?.placa ?? "—";
-    resumen.textContent = `Conductor: ${conductor} · Vehículo: ${placa} · Registrada por: ${primera.loginUsuario ?? "—"}`;
-}
-
-function pintarLista(paradas) {
-    listaParadas.replaceChildren();
-    paradas.forEach((parada, indice) => {
-        const item = document.createElement("li");
-        item.className = tipoDeParada(indice, paradas.length) + (tieneCoordenadas(parada) ? "" : " pendiente");
-
-        const numero = document.createElement("span");
-        numero.className = "num";
-        numero.textContent = String(indice + 1);
-
-        const lugar = document.createElement("div");
-        lugar.textContent = parada.ubicacion;                  // textContent: nunca innerHTML con datos de la base
-        const coordenadas = document.createElement("div");
-        coordenadas.className = "coord";
-        coordenadas.textContent = tieneCoordenadas(parada)
-            ? `${Number(parada.latitud).toFixed(6)}, ${Number(parada.longitud).toFixed(6)}`
-            : "Coordenadas pendientes";
-
-        const texto = document.createElement("div");
-        texto.append(lugar, coordenadas);
-        item.append(numero, texto);
-        item.addEventListener("click", () => enfocarParada(indice));
-        listaParadas.appendChild(item);
-    });
-}
-
-// intento = 0 es una consulta manual; intento > 0 es una reconsulta automatica
-async function cargarRuta(codigo, intento = 0) {
-    clearTimeout(temporizadorRefresco);
-    if (intento === 0) mostrar(mensajeRuta, "Cargando ruta...");
-
-    try {
-        const json = await apiGet(`/api/trayectos/rutas/${encodeURIComponent(codigo)}`);
-
-        const paradas = normalizarParadas(json);
-        if (paradas.length === 0) { mostrar(mensajeRuta, "Esa ruta no tiene paradas.", true); return; }
-
-        await asegurarMapa();
-        pintarResumen(paradas);
-        pintarLista(paradas);
-        // En una reconsulta automatica NO se reencuadra: si el usuario hizo zoom, el mapa no debe saltar
-        const enMapa = dibujarRuta(paradas, { encuadrar: intento === 0 });
-        const pendientes = paradas.length - enMapa;
-
-        if (pendientes === 0) {
-            mostrar(mensajeRuta, `Ruta ${codigo}: ${paradas.length} paradas en el mapa.`);
-        } else if (intento < MAX_REFRESCOS) {
-            // La tarea programada del backend completa las coordenadas cada 90 s: volvemos a preguntar hasta que esten
-            mostrar(mensajeRuta, `${pendientes} parada(s) sin coordenadas todavía. Se consulta de nuevo sola cada ${CONFIG.REFRESCO_MS / 1000} s.`);
-            temporizadorRefresco = setTimeout(() => cargarRuta(codigo, intento + 1), CONFIG.REFRESCO_MS);
-        } else {
-            mostrar(mensajeRuta, `${pendientes} parada(s) siguen sin coordenadas. Pulsa "Ver ruta" para consultar de nuevo.`, true);
-        }
-    } catch (error) {
-        if (error instanceof SesionExpiradaError) mostrarLogin(error.message);
-        else mostrar(mensajeRuta, error.message, true);
+// aria-current="page": el lector de pantalla dice "página actual", y el CSS la resalta en lima
+function marcarMenuActivo() {
+    const ruta = rutaActual();
+    // "/mapa/:codigo" debe resaltar la opción "/mapa": se compara con la parte fija de la ruta
+    const base = ruta ? ruta.ruta.replace(/\/:.*$/, "") : null;
+    for (const a of listaMenu.querySelectorAll("a")) {
+        if (a.dataset.ruta === base) a.setAttribute("aria-current", "page");
+        else a.removeAttribute("aria-current");
     }
 }
 
-// ---------------- Eventos ----------------
-
-formLogin.addEventListener("submit", async (evento) => {
-    evento.preventDefault(); // evita que el navegador recargue la pagina al enviar el formulario
-    mostrar(mensajeLogin, "");
-    try {
-        const { token } = await login(campoLogin.value.trim(), campoPassword.value);
-        if (!token) throw new Error("El servidor no devolvió el token.");
-        guardarSesion(token, campoApikey.value.trim()); // la APIKey la escribió el usuario
-
-        // Se comprueba YA la APIKey con una consulta protegida pequeña (el catálogo de documentos).
-        // Si es incorrecta el servidor responde 401 y se avisa aquí, no más adelante con una pantalla rota.
-        await apiGet("/api/documentos");
-
-        campoPassword.value = "";
-        campoApikey.value = ""; // ni la contraseña ni la clave deben quedarse en el formulario
-        mostrarRutas();
-    } catch (error) {
-        cerrarSesion(); // no dejar una sesión a medias (token guardado con una clave mala)
-        mostrar(mensajeLogin, error.message, true);
+// En pantallas pequeñas el menú se pliega detrás del botón "Menú"
+function abrirMenu(abrir) {
+    menu.classList.toggle("menu--abierto", abrir);
+    botonMenu.setAttribute("aria-expanded", String(abrir));
+}
+botonMenu.addEventListener("click", () => abrirMenu(botonMenu.getAttribute("aria-expanded") !== "true"));
+// Esc cierra el menú y devuelve el foco al botón
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && botonMenu.getAttribute("aria-expanded") === "true") {
+        abrirMenu(false);
+        botonMenu.focus();
     }
 });
+// Elegir una opción cierra el menú plegado
+menu.addEventListener("click", (e) => { if (e.target.closest("a")) abrirMenu(false); });
 
-formRuta.addEventListener("submit", (evento) => {
-    evento.preventDefault();
-    const codigo = campoCodigo.value.trim();
-    if (codigo) cargarRuta(codigo);
-});
+// --------------------------- CABECERA: SESIÓN -------------------------------
+function actualizarCabeceraSesion() {
+    const sesion = obtenerSesion();
+    const usuario = obtenerUsuario();
+    textoSesion.hidden = !sesion;
+    botonSalir.hidden = !sesion;
+    // "Iniciar sesión" sobra si ya hay sesión o si ya se está en la pantalla de login
+    botonEntrar.hidden = Boolean(sesion) || rutaActual()?.ruta === "/login";
+    if (sesion) {
+        textoSesion.textContent = usuario ?? "Mi cuenta";
+        const hora = expiraEn(sesion.token).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+        textoSesion.setAttribute("aria-label", `Mi cuenta, usuario ${usuario ?? ""}. Sesión válida hasta las ${hora}`);
+        textoSesion.title = `Sesión válida hasta las ${hora}`;
+    }
+}
 
 botonSalir.addEventListener("click", () => {
-    cerrarSesion();
-    mostrarLogin();
+    cerrarSesion(); // dispara "sesion:cambio" -> abajo se avisa y se lleva al inicio
 });
 
-// Arranque: si ya hay una sesion vigente (por ejemplo al recargar con F5) se salta el login
-mostrarRutas();
+// Cualquier cambio de sesión (login, logout, vencimiento, 401) pasa por aquí
+window.addEventListener("sesion:cambio", (evento) => {
+    const { abierta, motivo } = evento.detail;
+    construirMenu();
+    actualizarCabeceraSesion();
+    if (abierta) return; // el login ya sabe a dónde navegar
+
+    const ruta = rutaActual();
+    if (motivo) {
+        // Cierre FORZADO (token vencido o 401). En el login no se avisa: el propio formulario ya muestra el error.
+        if (ruta?.ruta !== "/login") avisar(motivo, "error");
+        if (ruta?.protegida) irALogin(window.location.hash.slice(1).split("?")[0]);
+    } else {
+        // Cierre voluntario: aviso amable y de vuelta al inicio público
+        avisar("Cerraste sesión.", "ok");
+        navegar("/publico");
+    }
+});
+
+// ------------------------ CADA CAMBIO DE PANTALLA ----------------------------
+function alCambiarPantalla(ruta) {
+    navegaciones++;
+    // 1) Título de la pestaña (lo que se ve en el historial del navegador y lo que lee el lector de pantalla)
+    document.title = `${ruta.titulo} · ${NOMBRE_APP}`;
+    // 2) Menú y cabecera
+    marcarMenuActivo();
+    actualizarCabeceraSesion();
+    abrirMenu(false);
+    // 3) Llevar el foco al contenido nuevo y anunciar la pantalla. En la PRIMERA carga no se mueve el
+    //    foco (el usuario aún no hizo nada), solo en navegaciones posteriores.
+    if (navegaciones > 1) {
+        window.scrollTo({ top: 0 });
+        principal.focus({ preventScroll: true });
+        anunciar(`Pantalla: ${ruta.titulo}`);
+    }
+}
+
+// "Saltar al contenido": mueve el foco a <main> sin cambiar el hash (que es del router)
+$("saltar-contenido").addEventListener("click", (e) => {
+    e.preventDefault();
+    principal.focus();
+});
+
+// ---------------------------------- ARRANQUE --------------------------------
+// Si se recarga la página (F5) con sesión viva, hay que volver a programar el aviso de vencimiento
+iniciarVigilancia();
+construirMenu();
+actualizarCabeceraSesion();
+iniciarRouter({ contenedor: principal, alCambiar: alCambiarPantalla });

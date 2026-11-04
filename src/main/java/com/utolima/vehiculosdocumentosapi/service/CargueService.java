@@ -36,5 +36,5 @@ public interface CargueService {
      * @param idCargue Identificador del cargue a consultar.
      * @return DTO con el resumen de conteos por cada uno de los 4 estados.
      */
-    CargueResultadoDTO consultarProgreso(Long idCargue);
+    void marcarCargueFallido(Long idCargue, String motivo);
 }

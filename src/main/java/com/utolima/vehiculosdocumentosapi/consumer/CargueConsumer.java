@@ -33,5 +33,12 @@ public class CargueConsumer {
 
         log.info("Procesamiento completado con exito para cargue: {}", mensaje.idCargue());
     }
+ // Escucha la cola de mensajes fallidos: aqui llegan los cargues que fallaron tras todos los reintentos.
+    @RabbitListener(queues = RabbitMQConfig.COLA_DLQ)
+    public void cargueFallido(CargueMensajeDTO mensaje) {
+        log.error("El cargue {} llego a la cola de mensajes fallidos; se marca como ERROR", mensaje.idCargue());
+        cargueService.marcarCargueFallido(mensaje.idCargue(),
+                "El procesamiento falló tras varios intentos y no se pudo completar");
+    }
 }
 

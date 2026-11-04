@@ -1,58 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
+<!--
+  ============================================================================
+  index.html · LA CARCASA (shell) DE TODA LA APLICACIÓN
+  ============================================================================
+  Esta es la ÚNICA página HTML del proyecto. Lo que cambia entre "pantallas" es
+  el contenido de <main id="contenido">: el router (js/router.js) lo reemplaza
+  según el hash de la URL (#/publico, #/vehiculos, ...). Como cada pantalla es
+  una entrada del historial, el botón "Atrás" del navegador funciona.
+
+  Piezas fijas (nunca se recargan):
+    1. Enlace "Saltar al contenido"  -> accesibilidad por teclado
+    2. <header>  marca + menú + botones de sesión
+    3. <main>    donde se dibuja cada vista
+    4. <footer>
+    5. Regiones "en vivo" (aria-live): avisos (toasts) y anuncios para lectores
+       de pantalla. Deben existir ANTES de que se les escriba texto; si se crean
+       al vuelo, los lectores de pantalla no anuncian el primer mensaje.
+-->
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Rutas y trayectos</title>
-    <link rel="stylesheet" href="./style.css">
+    <!-- El router cambia este título en cada pantalla (ver app.js) -->
+    <title>Transporte · Vehículos y documentos</title>
+    <meta name="description" content="Gestión de vehículos, documentos, conductores y rutas.">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#030407">
+
+    <!--
+      Tipografías (Google Fonts):
+        · Instrument Serif (cursiva) -> la palabra destacada de los titulares
+        · Inter                      -> todo lo demás (sans-serif limpia)
+      Si no hay internet, el CSS tiene alternativas (Georgia / system-ui) y la
+      página se ve bien igual.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+
+    <!-- El orden importa: base (variables y reglas globales) -> componentes reutilizables -> vistas -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/componentes.css">
+    <link rel="stylesheet" href="css/vistas.css">
 </head>
 
 <body>
+    <!--
+      Enlace para saltar el menú con el teclado. OJO: NO funciona como ancla normal
+      (href="#contenido") porque cambiaría el hash y el router lo creería una ruta
+      nueva. app.js intercepta el clic y solo mueve el foco a <main>.
+    -->
+    <a class="saltar" href="#contenido" id="saltar-contenido">Saltar al contenido</a>
 
-    <!-- VISTA 1: inicio de sesion. Se muestra mientras no haya una sesion vigente. -->
-    <section id="vista-login" class="tarjeta-login">
-        <h1>Rutas y trayectos</h1>
-        <p>Inicia sesión con tu usuario de administrador.</p>
-        <form id="form-login">
-            <label for="campo-login">Usuario</label>
-            <input id="campo-login" type="text" autocomplete="username" required>
-            <label for="campo-password">Contraseña</label>
-            <input id="campo-password" type="password" autocomplete="current-password" required>
-            <label for="campo-apikey">APIKey</label>
-            <input id="campo-apikey" type="password" autocomplete="off" required>
-            <p class="ayuda">La APIKey se muestra una sola vez, al crear tu usuario. Guárdala en un lugar seguro.</p>
-            <button type="submit">Entrar</button>
-        </form>
-        <p id="mensaje-login" class="mensaje" role="alert"></p>
-    </section>
+    <header class="cabecera">
+        <div class="cabecera-interior">
+            <a class="marca" href="#/publico" aria-label="Transporte, ir al inicio">
+                <span class="marca-punto" aria-hidden="true"></span>
+                <span>Transporte</span>
+            </a>
 
-    <!-- VISTA 2: consulta de una ruta. Empieza oculta (atributo hidden). -->
-    <section id="vista-ruta" hidden>
-        <header class="barra">
-            <form id="form-ruta">
-                <label for="codigo-ruta">Código de ruta</label>
-                <input id="codigo-ruta" type="text" placeholder="Ej. PRUEBA-001" required>
-                <button type="submit">Ver ruta</button>
-            </form>
-            <div class="sesion">
-                <span id="texto-sesion"></span>
-                <button id="btn-salir" type="button">Cerrar sesión</button>
+            <!-- Botón que despliega el menú en pantallas pequeñas (se oculta en escritorio por CSS) -->
+            <button class="menu-boton" id="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal">
+                Menú
+            </button>
+
+            <!-- El <ul> lo rellena app.js a partir de la tabla RUTAS de router.js.
+                 Sin sesión solo muestra las pantallas públicas. -->
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul class="menu-lista" id="menu-lista"></ul>
+            </nav>
+
+            <div class="cabecera-sesion">
+                <!-- Con sesión: muestra el login del usuario y lleva a "Mi cuenta" -->
+                <a class="sesion-texto" id="texto-sesion" href="#/cuenta" hidden></a>
+                <a class="boton boton--primario boton--chico" id="btn-entrar" href="#/login">Iniciar sesión</a>
+                <button class="boton boton--contorno boton--chico" id="btn-salir" type="button" hidden>Cerrar sesión</button>
             </div>
-        </header>
-
-        <div class="contenido">
-            <aside class="panel">
-                <p id="mensaje-ruta" class="mensaje" role="status"></p>
-                <p id="resumen" class="resumen"></p>
-                <ol id="lista-paradas" class="paradas"></ol>
-            </aside>
-            <div id="mapa"></div>
         </div>
-    </section>
+    </header>
 
-    <!-- type="module" permite usar import/export entre archivos JS -->
-    <script type="module" src="./js/app.js"></script>
+    <!--
+      tabindex="-1": <main> no está en el orden de tabulación, pero se le puede dar foco desde
+      JavaScript. Así, al cambiar de pantalla, el foco "salta" al contenido nuevo y el lector de
+      pantalla empieza a leerlo desde ahí.
+    -->
+    <main id="contenido" class="contenido" tabindex="-1"></main>
+
+    <footer class="pie">
+        <p>Universidad del Tolima · Ingeniería de Sistemas · Proyecto Vehículos y documentos</p>
+    </footer>
+
+    <!-- Avisos tipo "toast". Los escribe js/ui/mensajes.js -->
+    <div class="avisos" id="avisos" aria-live="polite" aria-atomic="false"></div>
+    <!-- Anuncio invisible: dice "Pantalla: Vehículos" a lectores de pantalla al cambiar de pantalla -->
+    <div class="solo-lectores" id="anuncio" role="status" aria-live="polite"></div>
+
+    <noscript>Esta aplicación necesita JavaScript para funcionar.</noscript>
+
+    <!-- type="module": permite import/export entre archivos y se ejecuta después de cargar el HTML -->
+    <script type="module" src="js/app.js"></script>
 </body>
 
 </html>

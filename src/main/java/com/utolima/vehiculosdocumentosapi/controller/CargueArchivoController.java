@@ -2,8 +2,6 @@ package com.utolima.vehiculosdocumentosapi.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.utolima.vehiculosdocumentosapi.dto.CargueRespuestaAsyncDTO;
-import com.utolima.vehiculosdocumentosapi.dto.CargueResultadoDTO;
 import com.utolima.vehiculosdocumentosapi.service.CargueService;
 
 import lombok.RequiredArgsConstructor;
@@ -53,9 +50,5 @@ public class CargueArchivoController {
      * @param idCargue Identificador del cargue (patron yyyyMMddHHmm).
      * @return Resumen con los conteos en CARGADO, VALIDADO, PROCESADO y ERROR.
      */
-    @GetMapping("/{idCargue}")
-    public ResponseEntity<CargueResultadoDTO> consultarProgreso(@PathVariable Long idCargue) {
-        CargueResultadoDTO resultado = cargueService.consultarProgreso(idCargue);
-        return ResponseEntity.ok(resultado);
-    }
+ 
 }

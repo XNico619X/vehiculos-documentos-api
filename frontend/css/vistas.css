@@ -1,0 +1,839 @@
+/* ============================================================================
+   vistas.css · ESTILOS DE LA CARCASA Y DE CADA PANTALLA
+   ============================================================================
+   Lo que solo usa UNA pantalla vive aquí (hero, specs, mapa, login...).
+   Lo reutilizable vive en componentes.css. Al agregar vistas nuevas (partes
+   1 a 6) se agregan sus bloques al final, con un comentario que las separe.
+   ========================================================================= */
+
+/* ============================ CABECERA Y MENÚ ============================= */
+.cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    /* Negro semitransparente + desenfoque: el contenido se "difumina" al pasar por debajo */
+    background: rgba(3, 4, 7, .78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--linea);
+}
+
+.cabecera-interior {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: var(--ancho-max);
+    min-height: var(--alto-cabecera);
+    margin: 0 auto;
+    padding: 0 var(--margen-lateral);
+}
+
+.marca {
+    display: inline-flex;
+    align-items: center;
+    gap: .7rem;
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .22em;
+    color: var(--texto);
+    text-decoration: none;
+}
+
+.marca:hover {
+    color: var(--texto);
+}
+
+/* El puntico lima de la marca "respira" suavemente */
+.marca-punto {
+    width: .7rem;
+    height: .7rem;
+    border-radius: 50%;
+    background: var(--lima);
+    box-shadow: 0 0 0 0 rgba(212, 255, 36, .55);
+    animation: pulso 2.8s ease-out infinite;
+}
+
+@keyframes pulso {
+    70% {
+        box-shadow: 0 0 0 .7rem rgba(212, 255, 36, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(212, 255, 36, 0);
+    }
+}
+
+.menu {
+    flex: 1;
+    min-width: 0;
+}
+
+.menu-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Enlaces del menú: texto pequeño, mayúsculas, letter-spacing amplio */
+.menu-enlace {
+    display: block;
+    padding: .55rem .85rem;
+    font-size: .7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--texto-suave);
+    text-decoration: none;
+    border-radius: 999px;
+    transition: color .2s, background-color .2s;
+}
+
+.menu-enlace:hover {
+    color: var(--texto);
+    background: rgba(255, 255, 255, .06);
+}
+
+/* Página actual: aria-current="page" lo pone app.js. Va con texto lima Y un subrayado
+   (no solo color) para que se distinga también sin ver colores. */
+.menu-enlace[aria-current="page"] {
+    color: var(--lima);
+    background: rgba(212, 255, 36, .08);
+    box-shadow: inset 0 -1px 0 var(--lima);
+}
+
+.menu-boton {
+    display: none;
+    /* solo se muestra en pantallas chicas (abajo) */
+    margin-left: auto;
+    padding: .5rem 1rem;
+    font: inherit;
+    font-size: .68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--texto);
+    background: transparent;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.menu-boton[aria-expanded="true"] {
+    color: var(--lima);
+    border-color: var(--lima);
+}
+
+.cabecera-sesion {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-left: auto;
+}
+
+.sesion-texto {
+    font-size: .7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--texto-suave);
+    text-decoration: none;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sesion-texto:hover {
+    color: var(--lima);
+}
+
+/* Con 8 opciones el menú no cabe en una sola fila por debajo de ~1200px: se pliega */
+@media (max-width: 1200px) {
+    .cabecera-interior {
+        flex-wrap: wrap;
+        padding-block: .75rem;
+    }
+
+    .menu-boton {
+        display: inline-block;
+        order: 2;
+    }
+
+    .cabecera-sesion {
+        order: 3;
+        margin-left: 0;
+    }
+
+    .menu {
+        order: 4;
+        flex-basis: 100%;
+        display: none;
+    }
+
+    /* app.js agrega .menu--abierto al pulsar "Menú" */
+    .menu--abierto {
+        display: block;
+        padding: .5rem 0 1rem;
+        animation: aparecer .25s var(--suave) both;
+    }
+
+    .menu-lista {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .menu-enlace {
+        padding: .85rem .5rem;
+        border-radius: 0;
+        border-bottom: 1px solid var(--linea);
+        box-shadow: none !important;
+    }
+
+    .menu-enlace[aria-current="page"] {
+        background: transparent;
+    }
+}
+
+@media (max-width: 640px) {
+    .sesion-texto {
+        display: none;
+    }
+
+    /* en el celular el nombre sobra: queda el botón */
+}
+
+/* ======================= CONTENIDO PRINCIPAL Y PIE ======================== */
+.contenido {
+    flex: 1;
+    width: 100%;
+    max-width: var(--ancho-max);
+    margin: 0 auto;
+    padding: 0 var(--margen-lateral);
+}
+
+/* Cada vista se envuelve en .vista (lo crea router.js) y entra con un fundido suave */
+.vista {
+    padding-block: clamp(1.5rem, 5vw, 3.5rem);
+    animation: aparecer .5s var(--suave) both;
+}
+
+.pie {
+    margin-top: 3rem;
+    padding: 1.6rem var(--margen-lateral);
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    text-align: center;
+    color: var(--texto-tenue);
+    border-top: 1px solid var(--linea);
+}
+
+/* Encabezado estándar de cada vista (lo crea ui/util.js → encabezadoVista) */
+.encabezado-vista {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+    max-width: 52rem;
+}
+
+.encabezado-vista p:not(.sobretitulo) {
+    max-width: 40rem;
+    font-size: 1.05rem;
+    color: var(--texto-suave);
+}
+
+/* ================================ HERO ==================================== */
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: center;
+    padding-block: clamp(1rem, 5vh, 3.5rem) clamp(2rem, 6vh, 4rem);
+}
+
+.hero-texto {
+    display: grid;
+    gap: 1.6rem;
+    justify-items: start;
+}
+
+/* Gran contraste de tamaño: titular enorme vs. texto de apoyo pequeño */
+.hero h1 {
+    font-size: clamp(2.7rem, 7vw, 5.6rem);
+    line-height: 1;
+}
+
+.hero-apoyo {
+    max-width: 30rem;
+    font-size: 1.05rem;
+    color: var(--texto-suave);
+}
+
+.hero-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .9rem;
+    margin-top: .4rem;
+}
+
+/* Visual grande a la derecha */
+.hero-visual {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    max-height: 34rem;
+    width: 100%;
+    margin-inline: auto;
+    overflow: hidden;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: 36px;
+    background:
+        radial-gradient(70% 60% at 75% 15%, rgba(21, 88, 201, .85), transparent 70%),
+        radial-gradient(60% 50% at 10% 100%, rgba(21, 88, 201, .45), transparent 70%),
+        linear-gradient(160deg, #0a1a42, #060b1c 70%);
+}
+
+.hero-visual svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Partes del dibujo SVG (la ruta y sus paradas) */
+.hv-rejilla {
+    stroke: rgba(255, 255, 255, .07);
+    stroke-width: 1;
+}
+
+.hv-ruta {
+    fill: none;
+    stroke: var(--lima);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 700;
+    stroke-dashoffset: 700;
+    /* la ruta se "dibuja" sola al cargar */
+    animation: trazar 2.2s .3s var(--suave) forwards;
+}
+
+@keyframes trazar {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.hv-parada {
+    opacity: 0;
+    animation: aparecer .6s var(--suave) forwards;
+}
+
+.hv-parada circle {
+    stroke-width: 2;
+}
+
+.hv-parada text {
+    font: 600 13px var(--fuente-texto);
+    text-anchor: middle;
+}
+
+.hv-inicio circle {
+    fill: var(--lima);
+    stroke: var(--negro);
+}
+
+.hv-inicio text {
+    fill: var(--negro);
+}
+
+.hv-medio circle {
+    fill: var(--cobalto);
+    stroke: #fff;
+}
+
+.hv-medio text {
+    fill: #fff;
+}
+
+.hv-fin circle {
+    fill: #fff;
+    stroke: var(--lima);
+}
+
+.hv-fin text {
+    fill: var(--negro);
+}
+
+/* Tarjetita "de vidrio" flotando sobre el visual */
+.hero-chip {
+    position: absolute;
+    left: 1.25rem;
+    /* arriba a la izquierda: la ruta va de abajo-izquierda a arriba-derecha, esa esquina siempre queda libre */
+    top: 1.25rem;
+    display: grid;
+    gap: .2rem;
+    padding: .85rem 1.1rem;
+    background: rgba(3, 4, 7, .55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--linea-fuerte);
+    border-radius: 18px;
+}
+
+.hero-chip strong {
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+/* Fila de datos pequeños, separados por líneas verticales */
+.specs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--linea);
+}
+
+.spec {
+    display: grid;
+    gap: .35rem;
+    padding: 1.5rem 1.25rem 0;
+}
+
+.spec+.spec {
+    border-left: 1px solid var(--linea);
+}
+
+.spec:first-child {
+    padding-left: 0;
+}
+
+.spec-valor {
+    font-family: var(--fuente-titular);
+    font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+    line-height: 1;
+}
+
+@media (max-width: 900px) {
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-visual {
+        max-width: 30rem;
+    }
+
+    .specs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .spec {
+        padding: 1.25rem 1rem;
+    }
+
+    .spec:nth-child(odd) {
+        border-left: 0;
+        padding-left: 0;
+    }
+
+    .spec:nth-child(n+3) {
+        border-top: 1px solid var(--linea);
+    }
+}
+
+/* Sección de consultas públicas (la rellena la Parte 1) */
+.seccion {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: clamp(2.5rem, 7vw, 5rem);
+    scroll-margin-top: calc(var(--alto-cabecera) + 1rem);
+}
+
+/* ================================ LOGIN =================================== */
+.login {
+    display: grid;
+    gap: 1.75rem;
+    max-width: 30rem;
+    margin: clamp(0rem, 4vh, 3rem) auto 0;
+}
+
+.login h1 {
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+}
+
+/* ======================== MAPA DE UNA RUTA (vista) ======================== */
+.mapa-formulario {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.mapa-formulario .campo {
+    flex: 1 1 16rem;
+    max-width: 24rem;
+}
+
+.mapa-layout {
+    display: grid;
+    grid-template-columns: 20rem minmax(0, 1fr);
+    gap: 1rem;
+    height: clamp(26rem, 68vh, 46rem);
+}
+
+.mapa-panel {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.25rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--cobalto-velo);
+}
+
+.mapa-resumen {
+    font-size: .88rem;
+    color: var(--texto-suave);
+}
+
+.mapa {
+    min-height: 20rem;
+    overflow: hidden;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio);
+    background: var(--superficie);
+}
+
+/* Lista de paradas */
+.paradas {
+    display: grid;
+    gap: .35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.parada {
+    display: flex;
+    gap: .8rem;
+    align-items: flex-start;
+    width: 100%;
+    padding: .65rem;
+    font: inherit;
+    text-align: left;
+    color: var(--texto);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background-color .2s, border-color .2s;
+}
+
+.parada:hover {
+    background: rgba(255, 255, 255, .05);
+    border-color: var(--linea);
+}
+
+.parada-numero,
+.pin {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--cobalto);
+    border: 2px solid #fff;
+    border-radius: 50%;
+}
+
+/* Colores por tipo de parada. Inicio y fin llevan además un TEXTO ("Inicio", "Fin"),
+   así que el significado no depende solo del color. */
+.parada.inicio .parada-numero,
+.pin.inicio {
+    color: var(--negro);
+    background: var(--lima);
+    border-color: var(--negro);
+}
+
+.parada.fin .parada-numero,
+.pin.fin {
+    color: var(--negro);
+    background: #fff;
+    border-color: var(--lima);
+}
+
+/* El marcador del mapa (un <div> nuestro) lleva sombra para verse sobre cualquier fondo */
+.pin {
+    width: 2.2rem;
+    height: 2.2rem;
+    font-size: .9rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .55);
+}
+
+.parada-lugar {
+    font-size: .95rem;
+    line-height: 1.35;
+}
+
+.parada-coord {
+    font-size: .78rem;
+    color: var(--texto-tenue);
+    font-variant-numeric: tabular-nums;
+}
+
+.parada-rol {
+    display: block;
+    font-size: .62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--lima);
+}
+
+.parada.pendiente .parada-coord {
+    color: var(--aviso);
+}
+
+@media (max-width: 900px) {
+    .mapa-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .mapa {
+        order: -1;
+        height: 22rem;
+    }
+
+    .mapa-panel {
+        max-height: 20rem;
+    }
+}
+
+/* ================ VISTAS "PRÓXIMAMENTE" (mientras se construyen) ========== */
+.proximamente {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    max-width: 40rem;
+}
+
+.proximamente ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: var(--texto-suave);
+}
+
+/* ============================================================================
+   PARTE 1 · CONSULTAS PÚBLICAS (pantalla de inicio)
+   ========================================================================= */
+
+/* Rejilla de las 6 tarjetas de consulta */
+.consultas-rejilla {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(18.5rem, 1fr));
+}
+
+/* Cada tarjeta es un <form>: el botón siempre queda abajo, aunque unas tarjetas tengan campo y otras no */
+.consulta {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+}
+
+.consulta .formulario-acciones {
+    margin-top: auto;
+    padding-top: .4rem;
+}
+
+.consulta-numero {
+    font-family: var(--fuente-titular);
+    font-style: italic;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--lima);
+}
+
+.consulta-descripcion {
+    font-size: .95rem;
+    color: var(--texto-suave);
+}
+
+/* La última consulta ejecutada queda resaltada con borde lima */
+.consulta--activa {
+    border-color: rgba(212, 255, 36, .6);
+    background: linear-gradient(180deg, rgba(21, 88, 201, .26), rgba(21, 88, 201, .06));
+}
+
+/* Zona de resultado */
+.resultado {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: .5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--linea-fuerte);
+    scroll-margin-top: calc(var(--alto-cabecera) + 1rem);
+    animation: aparecer .4s var(--suave) both;
+}
+
+.resultado-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.resultado-cabecera h3 {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+/* El título recibe foco por programa; no necesita anillo (no es un control) */
+.resultado-cabecera h3:focus {
+    outline: none;
+}
+
+.resultado-cuerpo {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.texto-tenue {
+    font-size: .85rem;
+    color: var(--texto-tenue);
+}
+
+/* Celda "documentos que requieren atención" */
+.docs-lista {
+    display: grid;
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.docs-lista li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem .75rem;
+}
+
+.docs-celda p {
+    margin-top: .5rem;
+}
+
+/* Ficha de datos (<dl>) en rejilla */
+.datos {
+    display: grid;
+    gap: 1rem 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    margin: 0;
+}
+
+.datos dd {
+    margin: .25rem 0 0;
+    font-size: 1.05rem;
+}
+
+/* Detalle de un vehículo por placa */
+.detalle-vehiculo {
+    display: grid;
+    gap: 1.25rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: linear-gradient(180deg, var(--cobalto-velo), rgba(21, 88, 201, .04));
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-grande);
+}
+
+.detalle-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.detalle-placa {
+    font-family: var(--fuente-titular);
+    font-size: clamp(2.6rem, 7vw, 4.2rem);
+    line-height: 1;
+    letter-spacing: .04em;
+}
+
+.detalle-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.detalle-vehiculo h3 {
+    margin-top: .5rem;
+    font-size: 1.15rem;
+}
+
+/* Tarjetas de conteo (personas por tipo) */
+.conteo {
+    display: grid;
+    gap: .5rem;
+}
+
+.conteo-numero {
+    font-family: var(--fuente-titular);
+    font-size: clamp(3.5rem, 9vw, 5.5rem);
+    line-height: 1;
+    color: var(--lima);
+}
+
+/* Rutas restringidas */
+.rejilla-tarjetas--ancha {
+    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+}
+
+.ruta-restringida {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+}
+
+.ruta-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.ruta-restringida summary {
+    cursor: pointer;
+    font-size: .72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--cobalto-claro);
+}
+
+.ruta-restringida summary:hover {
+    color: var(--lima);
+}
+
+.ruta-paradas {
+    margin: .75rem 0 0;
+    padding-left: 1.3rem;
+    color: var(--texto-suave);
+    font-size: .92rem;
+}
+
+.ruta-paradas li {
+    padding-block: .2rem;
+}
