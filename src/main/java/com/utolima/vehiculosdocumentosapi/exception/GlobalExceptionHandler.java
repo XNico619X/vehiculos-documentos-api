@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
 import com.utolima.vehiculosdocumentosapi.dto.ErrorResponseDTO;
 
 @RestControllerAdvice // se aplica a TODOS los @RestController de la aplicacion, sin tener que repetir nada en cada uno
@@ -50,5 +52,14 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = new ErrorResponseDTO(LocalDateTime.now(), 400, ex.getMessage(), null);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
+    
+ // Un archivo mayor que spring.servlet.multipart.max-file-size no llega a ningun controlador:
+ // Spring lo rechaza antes. Sin este metodo el usuario veria un 500 sin explicacion.
+ @ExceptionHandler(MaxUploadSizeExceededException.class)
+ public ResponseEntity<ErrorResponseDTO> manejarArchivoGrande(MaxUploadSizeExceededException ex) {
+     ErrorResponseDTO error = new ErrorResponseDTO(LocalDateTime.now(), 413,
+             "El archivo supera el tamano maximo permitido (2 MB)", null);
+     return new ResponseEntity<>(error, HttpStatus.PAYLOAD_TOO_LARGE);
+ }
     
 }
