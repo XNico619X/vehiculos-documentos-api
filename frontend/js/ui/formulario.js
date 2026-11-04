@@ -194,7 +194,9 @@ export function mostrarErrorGeneral(form, texto, lista = []) {
         zona = el("div", { class: "formulario-error", role: "alert" });
         form.prepend(zona);
     }
-    zona.replaceChildren(texto, lista.length ? el("ul", {}, lista.map((t) => el("li", {}, t))) : null);
+    // replaceChildren convierte null en el texto "null": la lista solo se agrega si hay elementos
+    zona.replaceChildren(texto);
+    if (lista.length) zona.append(el("ul", {}, lista.map((t) => el("li", {}, t))));
     zona.hidden = false;
 }
 
