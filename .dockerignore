@@ -1,0 +1,13 @@
+target/
+.git/
+.github/
+.vscode/
+.idea/
+.mvn/
+frontend/
+postman/
+docs/
+sql/
+*.md
+docker-compose.yml
+Dockerfile

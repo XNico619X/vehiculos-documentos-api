@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.utolima.vehiculosdocumentosapi.dto.CambioEstadoConductorDTO;
+import com.utolima.vehiculosdocumentosapi.dto.ConductorAsociadoResponseDTO;
 import com.utolima.vehiculosdocumentosapi.dto.VehiculoPersonaRequestDTO;
 import com.utolima.vehiculosdocumentosapi.exception.PersonaNoEsConductorException;
 import com.utolima.vehiculosdocumentosapi.exception.RecursoNoEncontradoException;
@@ -70,11 +71,19 @@ public class VehiculoPersonaServiceImpl implements VehiculoPersonaService {
     }
 
     @Override
-    public List<VehiculoPersona> listarConductoresDeVehiculo(Long idVehiculo) {
-        return vehiculoPersonaRepository.findAll().stream()
-            .filter(vp -> vp.getVehiculo() != null
-                && idVehiculo.equals(vp.getVehiculo().getId()))
-            .collect(java.util.stream.Collectors.toList());
+    @Transactional(readOnly = true) // la Persona es LAZY: se lee dentro de la transaccion para armar el DTO
+    public List<ConductorAsociadoResponseDTO> listarConductoresDeVehiculo(Long idVehiculo) {
+        // Antes devolvia la entidad VehiculoPersona: Jackson tropezaba con los proxies LAZY de vehiculo y persona.
+        // findByVehiculo_Id filtra en la base de datos (antes se traian TODAS las asociaciones y se filtraba en Java).
+        return vehiculoPersonaRepository.findByVehiculo_Id(idVehiculo).stream()
+            .map(vp -> new ConductorAsociadoResponseDTO(
+                    vp.getPersona().getIdPersona(),
+                    vp.getPersona().getIdentificacion(),
+                    vp.getPersona().getNombres(),
+                    vp.getPersona().getApellidos(),
+                    vp.getFechaAsociacion(),
+                    vp.getEstadoConductor()))
+            .toList();
     }
 
     @Override

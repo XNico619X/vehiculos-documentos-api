@@ -1152,3 +1152,394 @@
 .ruta-paradas li {
     padding-block: .2rem;
 }
+/* ============================================================================
+   CARGUE MASIVO DE EXCEL  (vistas/cargues.js)
+   ========================================================================= */
+.cargue-layout {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+    align-items: start;
+}
+
+.titulo-seccion {
+    margin-bottom: 1.25rem;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+}
+
+.titulo-seccion + .texto-tenue {
+    margin-bottom: 1rem;
+}
+
+/* minmax(0, 1fr): sin esto la tabla (min-width 38rem) estira la rejilla y la PÁGINA entera
+   se desplaza de lado. Así solo se desplaza la tabla, dentro de su contenedor. */
+.cargue-resultado {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.cargue-resultado .tabla td.mono {
+    white-space: nowrap;
+}
+
+.mono {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+/* Los 3 pasos, numerados con un círculo lima */
+.pasos {
+    display: grid;
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: paso;
+}
+
+.paso {
+    position: relative;
+    display: grid;
+    gap: .6rem;
+    padding-left: 3rem;
+    counter-increment: paso;
+}
+
+.paso::before {
+    content: counter(paso);
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    font-weight: 600;
+    color: var(--negro);
+    background: var(--lima);
+    border-radius: 50%;
+}
+
+.paso h3 {
+    font-size: 1.05rem;
+}
+
+.paso > .boton {
+    justify-self: start;
+}
+
+/* Zona de arrastrar y soltar (es el <label> del input de archivo) */
+.soltar {
+    display: grid;
+    justify-items: center;
+    gap: .35rem;
+    padding: 1.75rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    border: 2px dashed var(--linea-fuerte);
+    border-radius: var(--radio);
+    background: rgba(8, 14, 31, .5);
+    transition: border-color .2s, background-color .2s;
+}
+
+.soltar:hover,
+.soltar--encima {
+    border-color: var(--lima);
+    background: rgba(212, 255, 36, .05);
+}
+
+/* El input está oculto visualmente: el foco del teclado se dibuja en la zona */
+.paso:has(input[type="file"]:focus-visible) .soltar {
+    outline: 3px solid var(--lima);
+    outline-offset: 3px;
+}
+
+.soltar--lista {
+    border-style: solid;
+    border-color: var(--ok);
+}
+
+.soltar--error {
+    border-color: var(--error);
+}
+
+.soltar-icono {
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--lima);
+}
+
+.soltar-titulo u {
+    color: var(--lima);
+    text-underline-offset: .2em;
+}
+
+.soltar-archivo {
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.soltar-archivo:empty {
+    display: none;
+}
+
+.paso > .boton--chico[hidden] {
+    display: none;
+}
+
+/* Barra de progreso (subida y validación) */
+.progreso {
+    width: 100%;
+    height: .6rem;
+    appearance: none;
+    border: none;
+    border-radius: 999px;
+    background: var(--superficie-alta);
+    overflow: hidden;
+    accent-color: var(--lima);
+}
+
+.progreso::-webkit-progress-bar {
+    background: var(--superficie-alta);
+}
+
+.progreso::-webkit-progress-value {
+    background: var(--lima);
+    transition: width .4s var(--suave);
+}
+
+.progreso::-moz-progress-bar {
+    background: var(--lima);
+}
+
+.progreso[hidden] {
+    display: none;
+}
+
+.cargue-avance {
+    display: grid;
+    gap: .5rem;
+}
+
+/* Tarjetas de conteo por estado */
+.cargue-resumen {
+    display: grid;
+    gap: 1rem;
+    /* 9rem: en el celular caben 2 tarjetas por fila en lugar de 4 apiladas */
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cargue-resumen .conteo-numero {
+    font-size: clamp(2.6rem, 6vw, 3.6rem);
+}
+
+.conteo--ok .conteo-numero { color: var(--ok); }
+.conteo--error .conteo-numero { color: var(--error); }
+.conteo--aviso .conteo-numero { color: var(--aviso); }
+.conteo--info .conteo-numero { color: var(--cobalto-claro); }
+
+.cargue-rutas {
+    display: grid;
+    gap: .75rem;
+}
+
+.cargue-rutas-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cargue-filtro {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 1rem 1.5rem;
+}
+
+.cargue-filtro .campo {
+    min-width: 14rem;
+}
+
+.celda-observacion {
+    min-width: 16rem;
+    color: var(--texto-suave);
+}
+
+.observaciones {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.observaciones li + li {
+    margin-top: .25rem;
+}
+
+@media (max-width: 900px) {
+    .cargue-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================================
+   MI CUENTA  (vistas/cuenta.js)
+   ========================================================================= */
+.cuenta-resumen {
+    margin-bottom: 1.25rem;
+}
+
+.cuenta-resumen .datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 3rem;
+}
+
+.cuenta-layout {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    align-items: start;
+}
+
+.cuenta-layout .texto-tenue {
+    margin-bottom: 1.25rem;
+}
+
+/* ============================================================================
+   RUTAS  (vistas/rutas.js)
+   ========================================================================= */
+.rutas-layout {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+    align-items: start;
+}
+
+.rutas-consultas {
+    display: grid;
+    gap: 1rem;
+}
+
+.rutas-consultas .titulo-seccion {
+    margin-bottom: 0;
+}
+
+.acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+/* Editor de paradas */
+.paradas-grupo {
+    display: grid;
+    gap: .9rem;
+    margin: 0;
+    padding: 1.25rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+}
+
+.paradas-grupo legend {
+    padding: 0 .5rem;
+    font-weight: 600;
+}
+
+.paradas-editor {
+    display: grid;
+    gap: .9rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.parada-editor {
+    display: grid;
+    gap: .9rem;
+    padding: 1rem;
+    background: rgba(8, 14, 31, .55);
+    border: 1px solid var(--linea);
+    border-left: 3px solid var(--cobalto-claro);
+    border-radius: var(--radio-chico);
+}
+
+.parada-editor:first-child { border-left-color: var(--ok); }
+.parada-editor:last-child { border-left-color: var(--lima); }
+
+.parada-editor-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+}
+
+.parada-titulo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    font-size: 1rem;
+}
+
+.paradas-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem 1.25rem;
+}
+
+/* Consultas por conductor y por placa */
+.consulta-ruta {
+    display: grid;
+    gap: .75rem;
+}
+
+.consulta-ruta h3 {
+    font-size: 1.15rem;
+}
+
+.consulta-ruta-resultado:empty {
+    display: none;
+}
+
+.rutas-codigos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rutas-codigos .boton {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+.rutas-tarjetas {
+    display: grid;
+    gap: .75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ruta-tarjeta {
+    display: grid;
+    gap: .35rem;
+    padding: 1rem 1.25rem;
+}
+
+.ruta-tarjeta .boton {
+    justify-self: start;
+    margin-top: .35rem;
+}
+
+@media (max-width: 1000px) {
+    .rutas-layout {
+        grid-template-columns: 1fr;
+    }
+}

@@ -564,3 +564,81 @@
     border-radius: 50%;
     animation: girar .8s linear infinite;
 }
+
+/* -------------------- CAMPO CON BOTÓN (Mostrar / Ocultar) -------------------- */
+.campo-con-boton {
+    position: relative;
+    display: flex;
+}
+
+.campo-con-boton input {
+    flex: 1;
+    min-width: 0;
+    padding-right: 6.5rem !important;
+}
+
+.campo-alternar {
+    position: absolute;
+    top: 50%;
+    right: .45rem;
+    transform: translateY(-50%);
+    padding: .4rem .75rem;
+    font: inherit;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+    background: transparent;
+    border: 1px solid var(--linea);
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.campo-alternar:hover,
+.campo-alternar[aria-pressed="true"] {
+    color: var(--lima);
+    border-color: rgba(212, 255, 36, .45);
+}
+
+/* ------------------- CREDENCIALES QUE SE MUESTRAN UNA VEZ ------------------- */
+.credenciales-cuerpo {
+    display: grid;
+    gap: 1rem;
+}
+
+.credenciales-cuerpo > .boton {
+    justify-self: start;
+}
+
+.credenciales {
+    display: grid;
+    gap: .75rem;
+    margin: 0;
+}
+
+.credencial dd {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin: .3rem 0 0;
+}
+
+.credencial-valor {
+    flex: 1;
+    min-width: 0;
+    padding: .6rem .8rem;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: .95rem;
+    word-break: break-all;
+    color: var(--lima);
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-chico);
+    user-select: all; /* un clic selecciona todo el valor */
+}
+
+.boton[aria-disabled="true"] {
+    opacity: .5;
+    cursor: not-allowed;
+}
