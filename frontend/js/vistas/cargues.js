@@ -234,8 +234,13 @@ export function montar(contenedor, { params, navegar }) {
             return;
         }
         if (!activa) return;
+        // Defensa ante una respuesta con otra forma (proxy, versión vieja del backend): sin resumen no hay qué dibujar
+        if (!datos || typeof datos.resumen !== "object" || datos.resumen === null) {
+            zonaResultado.replaceChildren(estadoError("El servidor respondió algo inesperado al consultar el cargue.", () => mostrarCargue(id)));
+            return;
+        }
 
-        const pendientes = datos.resumen?.CARGADO ?? 0;
+        const pendientes = datos.resumen.CARGADO ?? 0;
         if (pendientes > 0 && intento < MAX_CONSULTAS) {
             dibujarEnProceso(datos);
             temporizador = setTimeout(() => consultar(id, intento + 1, enfocar), INTERVALO_CONSULTA_MS);
