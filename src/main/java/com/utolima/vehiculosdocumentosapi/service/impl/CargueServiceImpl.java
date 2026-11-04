@@ -15,26 +15,40 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.utolima.vehiculosdocumentosapi.config.RabbitMQConfig;
+import com.utolima.vehiculosdocumentosapi.dto.CargueMensajeDTO;
+import com.utolima.vehiculosdocumentosapi.dto.CargueRespuestaAsyncDTO;
 import com.utolima.vehiculosdocumentosapi.dto.CargueResultadoDTO;
+import com.utolima.vehiculosdocumentosapi.exception.RecursoNoEncontradoException;
 import com.utolima.vehiculosdocumentosapi.exception.ReglaNegocioException;
 import com.utolima.vehiculosdocumentosapi.model.Usuario;
 import com.utolima.vehiculosdocumentosapi.service.CargueService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * Implementacion del servicio de cargue masivo de trayectos a traves de archivos Excel (.xlsx).
+ * Implementacion del servicio de cargue masivo asincrono mediante RabbitMQ y procedimientos
+ * almacenados ejecutados con JdbcTemplate.
  *
- * Sigue una arquitectura basada en base de datos temporal (trayecto_tmp) y procedimientos
- * almacenados (sp_cargue, sp_validacion, sp_procesado) ejecutados exclusivamente mediante JdbcTemplate.
+ * Flujo desacoplado:
+ * 1. recibirArchivo(): Valida el Excel, inserta las filas en trayecto_tmp (estado CARGADO)
+ *    dentro de una transaccion y, UNICAMENTE tras confirmar el commit, publica un evento en RabbitMQ.
+ * 2. procesarCargueAsincrono(): El consumidor de RabbitMQ ejecuta sp_validacion y sp_procesado
+ *    en segundo plano sin bloquear la solicitud HTTP del usuario.
+ * 3. consultarProgreso(): Endpoint de sondeo para consultar el resumen por estados para un idCargue.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CargueServiceImpl implements CargueService {
@@ -43,9 +57,6 @@ public class CargueServiceImpl implements CargueService {
     private static final int MIN_FILAS_DATOS = 1;
     private static final int MAX_FILAS_DATOS = 500;
 
-    /**
-     * Lista inmutable con el orden exacto de los 7 encabezados requeridos en la Fila 1.
-     */
     private static final List<String> ENCABEZADOS_ESPERADOS = List.of(
             "id_persona",
             "id_vehiculo",
@@ -57,23 +68,16 @@ public class CargueServiceImpl implements CargueService {
     );
 
     private final JdbcTemplate jdbcTemplate;
+    private final RabbitTemplate rabbitTemplate;
 
     /**
-     * Procesa el archivo Excel completo dentro de una unica transaccion de base de datos.
-     *
-     * ¿Por que una sola transaccion (@Transactional)?:
-     * Garantiza atomicidad total del cargue. El ciclo completo (insercion de filas en trayecto_tmp,
-     * ejecucion de sp_validacion, ejecucion de sp_procesado y consulta del resumen) ocurre bajo
-     * una misma unidad de trabajo. Si ocurre una caida de red, fallo de servidor o error inesperado de base de datos,
-     * se efectua un rollback automatico, evitando que queden registros huerfanos o datos a medio procesar.
-     *
-     * @param archivo Archivo Excel (.xlsx) enviado en la peticion.
-     * @return DTO con el identificador del cargue, total de filas y resumen de conteos por estado.
+     * Paso 1: Recibe el archivo, valida su contenido, inserta las paradas en estado CARGADO
+     * y programa la publicacion a RabbitMQ tras confirmar el commit en la base de datos.
      */
     @Override
     @Transactional
-    public CargueResultadoDTO procesarArchivo(MultipartFile archivo) {
-        // 1. Validar Archivo basico
+    public CargueRespuestaAsyncDTO recibirArchivo(MultipartFile archivo) {
+        // 1. Validar Archivo
         if (archivo == null || archivo.isEmpty()) {
             throw new ReglaNegocioException("El archivo no puede ser nulo ni estar vacío.");
         }
@@ -83,35 +87,26 @@ public class CargueServiceImpl implements CargueService {
             throw new ReglaNegocioException("El archivo debe tener extensión .xlsx.");
         }
 
-        // Se inicializa DataFormatter con Locale.US para asegurar que el formato de numeros
-        // y fechas no dependa de la configuracion regional ni del idioma del sistema operativo servidor.
         DataFormatter dataFormatter = new DataFormatter(Locale.US);
         List<String[]> filasDatos = new ArrayList<>();
 
-        // Apertura del libro de trabajo con Apache POI
         try (Workbook workbook = new XSSFWorkbook(archivo.getInputStream())) {
             Sheet hoja = workbook.getSheet(NOMBRE_HOJA);
             if (hoja == null) {
                 throw new ReglaNegocioException("El archivo no contiene la hoja llamada 'Trayectos'.");
             }
 
-            // Validacion de la fila 1 de encabezados
             Row filaEncabezado = hoja.getRow(0);
             validarEncabezados(filaEncabezado, dataFormatter);
 
-            // Lectura de las filas de datos (a partir de la fila 2, indice 1)
             int ultimaFila = hoja.getLastRowNum();
             for (int i = 1; i <= ultimaFila; i++) {
                 Row fila = hoja.getRow(i);
                 if (esFilaVacia(fila, dataFormatter)) {
-                    continue; // Se ignoran filas totalmente vacias
+                    continue;
                 }
 
-                // ¿Por que NO se hace trim() de las celdas de datos?:
-                // Las celdas se extraen como texto exacto mediante dataFormatter.formatCellValue(cell).
-                // No se recortan espacios ni se alteran ceros a la izquierda para que entren en trayecto_tmp
-                // tal como vinieron en el Excel. De esta forma, sp_validacion puede detectar si el usuario
-                // envio espacios indebidos, caracteres invalidos o ceros a la izquierda sin enmascarar errores.
+                // Las celdas se extraen como texto exacto (sin alterar ni recortar espacios)
                 String[] valores = new String[ENCABEZADOS_ESPERADOS.size()];
                 for (int col = 0; col < ENCABEZADOS_ESPERADOS.size(); col++) {
                     Cell cell = fila.getCell(col, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
@@ -120,26 +115,17 @@ public class CargueServiceImpl implements CargueService {
                 filasDatos.add(valores);
             }
         } catch (ReglaNegocioException e) {
-            // Los errores propios de negocio (falta hoja, encabezado invalido, etc.) se propagan tal cual a HTTP 400.
             throw e;
         } catch (IOException | RuntimeException e) {
-            // POI lanza IOException o RuntimeException no comprobadas (por ejemplo NotOfficeXmlFileException si se
-            // sube un archivo PDF o binario corrupto renombrado a .xlsx). Se captura para evitar un HTTP 500
-            // y responder un HTTP 400 claro para el cliente.
             throw new ReglaNegocioException("El archivo no es un Excel .xlsx válido.");
         }
 
-        // Validacion de rango de filas de datos (entre 1 y 500)
         if (filasDatos.size() < MIN_FILAS_DATOS || filasDatos.size() > MAX_FILAS_DATOS) {
             throw new ReglaNegocioException(
                     "El archivo debe contener entre " + MIN_FILAS_DATOS + " y " + MAX_FILAS_DATOS + " filas de datos.");
         }
 
-        // 2. Preparar ID y Validar Concurrencia
-        // ¿Por que se rechaza un segundo cargue en el mismo minuto?:
-        // idCargue se calcula con el patron yyyyMMddHHmm. Si se permitiesen dos cargues dentro del mismo
-        // minuto cronologico, ambos compartirian el mismo identificador, mezclando paradas de archivos distintos
-        // en trayecto_tmp y corrompiendo la auditoria y el procesamiento por lotes.
+        // 2. Preparar ID y Validar Concurrencia por minuto
         Long idCargue = Long.parseLong(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm")));
         Long conteoExistente = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM trayecto_tmp WHERE id_cargue = ?",
@@ -150,10 +136,10 @@ public class CargueServiceImpl implements CargueService {
             throw new ReglaNegocioException("Ya hay un cargue en este minuto; espera un minuto e inténtalo de nuevo.");
         }
 
-        // 3. Obtener Login del usuario autenticado (se toma del contexto de seguridad, nunca del body)
+        // 3. Obtener Login del usuario autenticado
         String login = obtenerLoginAutenticado();
 
-        // 4. Procesar Filas (Paso 1: guardar tal cual en trayecto_tmp en estado CARGADO)
+        // 4. Guardar filas en trayecto_tmp en estado CARGADO (sp_cargue)
         for (String[] fila : filasDatos) {
             jdbcTemplate.update(
                     "CALL sp_cargue(?,?,?,?,?,?,?,?,?)",
@@ -169,18 +155,57 @@ public class CargueServiceImpl implements CargueService {
             );
         }
 
-        // 5. Procedimientos Finales
-        // sp_validacion valida formato, rutas (2 a 7 paradas, mismo conductor/vehiculo, orden 0..n-1),
-        // conductor PO, vehiculo habilitado y unicidad de ruta en la base de datos real.
+        // 5. Publicar en RabbitMQ DESPUES de confirmar la transaccion (evita lecturas sucias en el consumidor)
+        CargueMensajeDTO mensaje = new CargueMensajeDTO(idCargue, filasDatos.size(), login);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                log.info("Transaccion confirmada. Publicando cargue {} a RabbitMQ...", idCargue);
+                rabbitTemplate.convertAndSend(
+                        RabbitMQConfig.EXCHANGE_CARGUE,
+                        RabbitMQConfig.ROUTING_KEY_CARGUE,
+                        mensaje
+                );
+            }
+        });
+
+        return new CargueRespuestaAsyncDTO(
+                idCargue,
+                filasDatos.size(),
+                "RECIBIDO",
+                "El archivo fue recibido exitosamente y su validación está encolada para procesamiento en segundo plano."
+        );
+    }
+
+    /**
+     * Paso 2: Ejecutado de manera asincrona por el consumidor de RabbitMQ.
+     * Invoca los procedimientos almacenados de validacion y procesado definitivo.
+     */
+    @Override
+    @Transactional
+    public void procesarCargueAsincrono(Long idCargue) {
+        log.info("Iniciando validacion y procesado asincrono para el cargue: {}", idCargue);
         jdbcTemplate.update("CALL sp_validacion(?)", idCargue);
-
-        // sp_procesado traslada a la tabla trayecto unicamente las rutas completas en estado VALIDADO.
         jdbcTemplate.update("CALL sp_procesado(?)", idCargue);
+        log.info("Cargue {} procesado exitosamente por RabbitMQ.", idCargue);
+    }
 
-        // ¿Por que las filas en ERROR no lanzan una excepcion?:
-        // Si una o varias filas quedan marcadas con estado ERROR, se trata de rechazos de reglas de negocio
-        // a nivel de fila/ruta. La ejecucion del servicio fue exitosa y se retorna HTTP 201 con el mapa de resumen
-        // para que el cliente consulte cuantas filas fueron procesadas y cuantas tuvieron errores.
+    /**
+     * Paso 3: Permite consultar el estado actual del cargue por su idCargue.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public CargueResultadoDTO consultarProgreso(Long idCargue) {
+        Long totalFilas = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM trayecto_tmp WHERE id_cargue = ?",
+                Long.class,
+                idCargue
+        );
+
+        if (totalFilas == null || totalFilas == 0) {
+            throw new RecursoNoEncontradoException("No se encontró ningún cargue con id " + idCargue);
+        }
+
         Map<String, Long> resumen = new LinkedHashMap<>();
         resumen.put("CARGADO", 0L);
         resumen.put("VALIDADO", 0L);
@@ -199,14 +224,9 @@ public class CargueServiceImpl implements CargueService {
                 idCargue
         );
 
-        return new CargueResultadoDTO(idCargue, filasDatos.size(), resumen);
+        return new CargueResultadoDTO(idCargue, totalFilas.intValue(), resumen);
     }
 
-    /**
-     * Valida que la primera fila del libro contenga exactamente los 7 encabezados esperados en orden.
-     * En este caso SI se aplica .trim() para evitar rechazar archivos donde el usuario coloco espacios
-     * accidentales en los titulos de las columnas.
-     */
     private void validarEncabezados(Row filaEncabezado, DataFormatter dataFormatter) {
         if (filaEncabezado == null) {
             throw new ReglaNegocioException("La fila 1 de encabezados no existe en la hoja 'Trayectos'.");
@@ -233,9 +253,6 @@ public class CargueServiceImpl implements CargueService {
         }
     }
 
-    /**
-     * Verifica si una fila carece de contenido en todas sus celdas.
-     */
     private boolean esFilaVacia(Row fila, DataFormatter dataFormatter) {
         if (fila == null) {
             return true;
@@ -253,9 +270,6 @@ public class CargueServiceImpl implements CargueService {
         return true;
     }
 
-    /**
-     * Extrae el login del usuario autenticado en la sesion a partir del SecurityContextHolder.
-     */
     private String obtenerLoginAutenticado() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null) {
