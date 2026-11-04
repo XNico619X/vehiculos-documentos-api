@@ -62,9 +62,8 @@ export const RUTAS = [
     // Resultado de un cargue concreto: al terminar de subir se navega aquí, y así "Atrás" y F5 funcionan
     { ruta: "/cargues/:idCargue", titulo: "Resultado del cargue", protegida: true,
         cargar: () => import("./vistas/cargues.js") },
-    { ruta: "/cuenta", titulo: "Mi cuenta", protegida: true, cargar: proximamente,
-        parte: 2, titular: ["Mi ", "cuenta"],
-        descripcion: "Cambiar la contraseña y regenerar la API Key." },
+    { ruta: "/cuenta", titulo: "Mi cuenta", protegida: true,
+        cargar: () => import("./vistas/cuenta.js") },
 
     // ---- El mapa de ruta que ya existía (ahora es una pantalla más) ----
     { ruta: "/mapa", titulo: "Mapa de ruta", etiqueta: "Mapa", menu: true, protegida: true,

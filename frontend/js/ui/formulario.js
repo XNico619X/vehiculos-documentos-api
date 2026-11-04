@@ -76,6 +76,38 @@ export function crearCampo({
     return { contenedor, entrada };
 }
 
+// Botón "Mostrar / Ocultar" para un campo de contraseña o clave.
+//   const campo = crearCampo({ nombre: "password", tipo: "password", ... });
+//   agregarMostrarOcultar(campo.entrada);
+// aria-pressed dice al lector de pantalla si el texto está visible; aria-controls, qué campo cambia.
+// El botón NO lleva el nombre del campo en su texto visible, pero sí en el aria-label ("Mostrar Contraseña").
+export function agregarMostrarOcultar(entrada) {
+    const nombre = entrada.labels?.[0]?.firstChild?.textContent?.trim()
+        || entrada.closest(".campo")?.querySelector("label")?.firstChild?.textContent?.trim() || "valor";
+    const alternar = el("button", {
+        type: "button", class: "campo-alternar", "aria-pressed": "false", "aria-controls": entrada.id,
+        "aria-label": `Mostrar ${nombre}`,
+    }, "Mostrar");
+    alternar.addEventListener("click", () => {
+        const visible = entrada.type === "password";
+        entrada.type = visible ? "text" : "password";
+        alternar.textContent = visible ? "Ocultar" : "Mostrar";
+        alternar.setAttribute("aria-pressed", String(visible));
+        alternar.setAttribute("aria-label", `${visible ? "Ocultar" : "Mostrar"} ${nombre}`);
+    });
+    // El input y el botón quedan en una misma fila; el resto del campo (ayuda, error) no cambia
+    const fila = el("div", { class: "campo-con-boton" });
+    entrada.replaceWith(fila);
+    fila.append(entrada, alternar);
+    return alternar;
+}
+
+// Vuelve a ocultar un campo que el usuario dejó visible (por ejemplo, al limpiar el formulario)
+export function ocultarValor(entrada) {
+    const alternar = entrada.parentElement?.querySelector(".campo-alternar");
+    if (alternar && entrada.type === "text") alternar.click();
+}
+
 // Escribe un error debajo de un campo y lo marca como inválido (borde rojo + aria-invalid).
 // Funciona con cualquier control que esté dentro de un <div class="campo"> con un <p class="campo-error">.
 export function mostrarErrorCampo(entrada, mensaje) {

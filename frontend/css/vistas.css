@@ -1068,3 +1068,27 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================================================
+   MI CUENTA  (vistas/cuenta.js)
+   ========================================================================= */
+.cuenta-resumen {
+    margin-bottom: 1.25rem;
+}
+
+.cuenta-resumen .datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 3rem;
+}
+
+.cuenta-layout {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    align-items: start;
+}
+
+.cuenta-layout .texto-tenue {
+    margin-bottom: 1.25rem;
+}

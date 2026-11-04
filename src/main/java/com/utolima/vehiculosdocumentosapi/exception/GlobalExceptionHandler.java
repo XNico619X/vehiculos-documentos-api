@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -53,6 +54,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
     
+    // Un usuario autenticado que intenta algo que no le corresponde (ej. cambiar la contrasena de otro).
+    // Sin este metodo Spring responderia 403 con el cuerpo vacio y el front no tendria que mostrar.
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDTO> manejarAccesoDenegado(AccessDeniedException ex) {
+        ErrorResponseDTO error = new ErrorResponseDTO(LocalDateTime.now(), 403, ex.getMessage(), null);
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
  // Un archivo mayor que spring.servlet.multipart.max-file-size no llega a ningun controlador:
  // Spring lo rechaza antes. Sin este metodo el usuario veria un 500 sin explicacion.
  @ExceptionHandler(MaxUploadSizeExceededException.class)
