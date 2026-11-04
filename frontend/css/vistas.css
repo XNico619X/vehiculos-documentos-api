@@ -206,6 +206,321 @@
     /* en el celular el nombre sobra: queda el botón */
 }
 
+/* ======================= VEHÍCULOS Y DOCUMENTOS ========================== */
+.gestion-layout {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.gestion-barra {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1.4fr) repeat(2, minmax(10rem, 1fr)) auto;
+    align-items: end;
+    gap: 1rem;
+}
+
+.gestion-barra .campo {
+    margin: 0;
+}
+
+.gestion-barra--catalogo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gestion-barra--catalogo .mensaje {
+    margin: 0;
+}
+
+.gestion-contenido {
+    display: grid;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.acciones-tabla,
+.grupo-etiquetas {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .45rem;
+}
+
+.acciones-tabla .boton {
+    white-space: normal;
+}
+
+.vehiculo-detalle {
+    display: grid;
+    gap: 1.25rem;
+    scroll-margin-top: calc(var(--alto-cabecera) + 1rem);
+}
+
+.seccion-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .8rem 1.25rem;
+}
+
+.seccion-titulo h2 {
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+}
+
+.seccion-titulo h3 {
+    margin-bottom: .25rem;
+}
+
+.vehiculo-specs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    margin: 0;
+    border-block: 1px solid var(--linea);
+}
+
+.vehiculo-spec {
+    min-width: 0;
+    padding: .9rem 1rem .9rem 0;
+}
+
+.vehiculo-spec + .vehiculo-spec {
+    padding-left: 1rem;
+    border-left: 1px solid var(--linea);
+}
+
+.vehiculo-spec dt {
+    margin-bottom: .2rem;
+    color: var(--texto-tenue);
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+}
+
+.vehiculo-spec dd {
+    margin: 0;
+    font-size: .94rem;
+}
+
+.vigencia-documento {
+    display: grid;
+    gap: .15rem;
+}
+
+.vigencia-documento small {
+    color: var(--texto-tenue);
+}
+
+.acciones-documento {
+    padding-top: .25rem;
+}
+
+.fila-edicion-documento > td {
+    background: rgba(21, 88, 201, .09);
+}
+
+.formulario-estado-documento {
+    grid-template-columns: 1fr;
+    padding: .25rem;
+}
+
+.formulario-vehiculo,
+.formulario-catalogo {
+    scroll-margin-top: calc(var(--alto-cabecera) + 1rem);
+}
+
+.documentos-para-vehiculo {
+    display: grid;
+    gap: .8rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--linea);
+}
+
+.vehiculo-documentos-form-filas {
+    display: grid;
+    gap: .85rem;
+}
+
+.vehiculo-documento-form-row {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1.4fr) repeat(2, minmax(10rem, 1fr)) auto;
+    align-items: end;
+    gap: .8rem;
+    padding: 1rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-chico);
+    background: rgba(255, 255, 255, .025);
+}
+
+.vehiculo-documento-resumen {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .3rem 1rem;
+    padding: .7rem 0;
+    border-bottom: 1px solid var(--linea);
+}
+
+.vehiculo-documento-resumen span:last-of-type {
+    color: var(--texto-tenue);
+    font-size: .85rem;
+}
+
+.vehiculo-formulario-accion {
+    display: grid;
+    gap: .8rem;
+}
+
+.gestion-barra--personas {
+    grid-template-columns: minmax(12rem, 1fr) minmax(12rem, .7fr) auto;
+}
+
+.gestion-barra--conductores {
+    grid-template-columns: minmax(16rem, .8fr) minmax(15rem, 1fr);
+    align-items: center;
+}
+
+.formulario-persona,
+.formulario-asociacion {
+    scroll-margin-top: calc(var(--alto-cabecera) + 1rem);
+}
+
+.seccion-licencia[hidden] {
+    display: none;
+}
+
+.seccion-licencia {
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--linea);
+}
+
+.selector-estado-conductor {
+    min-width: 13rem;
+    padding: .55rem .75rem;
+    color: var(--texto);
+    background: var(--superficie-alta);
+    border: 1px solid var(--linea-fuerte);
+    border-radius: 999px;
+    font: inherit;
+    font-size: .82rem;
+}
+
+.selector-estado-conductor:focus {
+    outline: 2px solid var(--lima);
+    outline-offset: 2px;
+}
+
+.selector-estado-conductor:disabled {
+    opacity: .6;
+}
+
+.credenciales-admin {
+    display: grid;
+    gap: 1rem;
+}
+
+.credencial-fila {
+    display: grid;
+    grid-template-columns: 7rem minmax(12rem, 1fr) auto;
+    align-items: center;
+    gap: .6rem;
+}
+
+.credencial-fila label {
+    color: var(--texto-suave);
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+}
+
+.credencial-fila input {
+    min-width: 0;
+    padding: .65rem .8rem;
+    color: var(--texto);
+    background: var(--superficie);
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-chico);
+    font: inherit;
+}
+
+.confirmacion-credenciales {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    margin-top: .5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--linea);
+}
+
+.confirmacion-credenciales input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: .2rem;
+    accent-color: var(--lima);
+}
+
+.confirmacion-credenciales span {
+    font-size: .9rem;
+}
+
+@media (max-width: 850px) {
+    .gestion-barra {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .gestion-barra > .boton {
+        justify-self: start;
+    }
+
+    .vehiculo-documento-form-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vehiculo-documento-form-row > .boton {
+        justify-self: start;
+    }
+
+    .credencial-fila {
+        grid-template-columns: 1fr auto;
+    }
+
+    .credencial-fila label {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 560px) {
+    .gestion-barra,
+    .vehiculo-documento-form-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .gestion-barra--conductores,
+    .gestion-barra--personas {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .credencial-fila {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .credencial-fila label {
+        grid-column: auto;
+    }
+
+    .vehiculo-spec {
+        padding: .75rem 0;
+    }
+
+    .vehiculo-spec + .vehiculo-spec {
+        padding-left: 0;
+        border-left: 0;
+        border-top: 1px solid var(--linea);
+    }
+}
+
 /* ======================= CONTENIDO PRINCIPAL Y PIE ======================== */
 .contenido {
     flex: 1;
