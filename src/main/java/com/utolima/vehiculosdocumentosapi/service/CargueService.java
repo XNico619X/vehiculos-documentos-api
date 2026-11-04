@@ -2,24 +2,39 @@ package com.utolima.vehiculosdocumentosapi.service;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.utolima.vehiculosdocumentosapi.dto.CargueRespuestaAsyncDTO;
 import com.utolima.vehiculosdocumentosapi.dto.CargueResultadoDTO;
 
 /**
- * Contrato del servicio encargado del procesamiento y validacion de archivos Excel (.xlsx)
- * para el cargue masivo de trayectos.
- *
- * Desacopla la logica de negocio y acceso a datos por JdbcTemplate de los controladores web.
+ * Contrato del servicio encargado del cargue masivo y procesamiento asincrono
+ * de archivos Excel (.xlsx) mediante RabbitMQ y procedimientos almacenados (JdbcTemplate).
  */
 public interface CargueService {
 
     /**
-     * Valida la estructura del archivo Excel, registra las paradas en la tabla temporal trayecto_tmp,
-     * invoca los procedimientos de validacion y traslado definitivo, y genera el resumen por estados.
+     * Valida la estructura del archivo Excel, registra las paradas en trayecto_tmp bajo estado CARGADO,
+     * confirma la transaccion de base de datos y publica un evento en RabbitMQ para su procesamiento
+     * en segundo plano.
      *
-     * @param archivo Archivo Excel (.xlsx) multipart con la hoja "Trayectos" y los encabezados requeridos.
-     * @return DTO con el id del cargue, total de filas de datos y resumen de estados.
-     * @throws com.utolima.vehiculosdocumentosapi.exception.ReglaNegocioException Si el archivo es invalido,
-     *         no es un Excel valido, no cumple la estructura o ya existe un cargue en el mismo minuto.
+     * @param archivo Archivo Excel (.xlsx) con la hoja "Trayectos" y los 7 encabezados requeridos.
+     * @return DTO con HTTP 202 Accepted indicando que el cargue fue recibido con exito.
      */
-    CargueResultadoDTO procesarArchivo(MultipartFile archivo);
+    CargueRespuestaAsyncDTO recibirArchivo(MultipartFile archivo);
+
+    /**
+     * Ejecuta los procedimientos de validacion (sp_validacion) y traslado definitivo (sp_procesado).
+     * Este metodo es invocado por el consumidor de RabbitMQ en segundo plano.
+     *
+     * @param idCargue Identificador del cargue a procesar.
+     */
+    void procesarCargueAsincrono(Long idCargue);
+
+    /**
+     * Consulta el estado actual y el conteo de paradas por estado (CARGADO, VALIDADO, PROCESADO, ERROR)
+     * para un idCargue especifico.
+     *
+     * @param idCargue Identificador del cargue a consultar.
+     * @return DTO con el resumen de conteos por cada uno de los 4 estados.
+     */
+    CargueResultadoDTO consultarProgreso(Long idCargue);
 }
