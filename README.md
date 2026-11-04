@@ -12,7 +12,9 @@ Proyecto académico de *Profundización en Programación Orientada a Objetos II*
 | 1 | Vehículos, documentos y su relación: CRUD, búsquedas y validaciones |  Completa |
 | 2 | Personas, usuarios, conductores por vehículo, seguridad JWT + API Key y consultas públicas |  Completa |
 | 3 | Trayectos, tareas programadas, Google Maps, consultas de rutas e interfaz web |  Completa |
-| 4 | Cargue masivo de trayectos desde Excel con procedimientos almacenados |  En desarrollo |
+| 4 | Cargue masivo de trayectos desde Excel con procedimientos almacenados y RabbitMQ |  Completa |
+
+> 📖 **Documentación de la API:** Puedes consultar la especificación detallada de todos los endpoints, modelos y ejemplos en [docs/DOCUMENTACION_API.md](docs/DOCUMENTACION_API.md).
 
 
 ## Funcionalidades
@@ -37,8 +39,12 @@ Proyecto académico de *Profundización en Programación Orientada a Objetos II*
 - Cuatro consultas de rutas (por código, por conductor, por vehículo y rutas restringidas).
 - Interfaz web con login, mapa de Google y actualización automática de las coordenadas.
 
-### Entrega 4 · En desarrollo
-Cargue de trayectos desde una plantilla de Excel: una tabla temporal (`trayecto_tmp`) y tres procedimientos almacenados (`CARGUE`, `VALIDACION`, `PROCESADO`), más una consulta de cargues por identificador.
+### Entrega 4 · Cargue masivo de trayectos y RabbitMQ
+- Cargue masivo de paradas desde plantillas de Excel (`.xlsx`) mediante Apache POI 5.5.1.
+- Inserción sin alteraciones en tabla temporal (`trayecto_tmp`) mediante `sp_cargue`.
+- Procesamiento asíncrono desacoplado con **RabbitMQ**: respuesta inmediata HTTP 202 (Accepted) y consumidor en segundo plano con reintentos automáticos y Dead Letter Queue (DLQ).
+- Validación de negocio multinivel (`sp_validacion`) y traslado a tabla definitiva (`sp_procesado`).
+- Endpoint de sondeo y consulta de avance por `idCargue` (`GET /api/trayectos/cargues/{idCargue}`).
 
 
 ## Tecnologías

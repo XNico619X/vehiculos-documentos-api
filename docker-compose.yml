@@ -8,5 +8,30 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
+  api:
+    build: .
+    container_name: api-vehiculos
+    ports:
+      - "8080:8080"
+    environment:
+      # La base de datos sigue en XAMPP (en tu PC). Desde el contenedor, "localhost"
+      # es el propio contenedor, por eso se usa host.docker.internal para llegar a tu PC.
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/transporte
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-root}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-}
+      # Dentro de la red de Docker, RabbitMQ se llama por el nombre del servicio
+      SPRING_RABBITMQ_HOST: rabbitmq
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
