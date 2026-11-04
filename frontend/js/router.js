@@ -54,9 +54,8 @@ export const RUTAS = [
     { ruta: "/conductores", titulo: "Conductores", etiqueta: "Conductores", menu: true, protegida: true, cargar: proximamente,
         parte: 4, titular: ["Conductores por ", "vehículo"],
         descripcion: "Asociar conductores a un vehículo y cambiar su estado (PO, EA, RO)." },
-    { ruta: "/rutas", titulo: "Rutas", etiqueta: "Rutas", menu: true, protegida: true, cargar: proximamente,
-        parte: 5, titular: ["Rutas y ", "trayectos"],
-        descripcion: "Crear una ruta con sus paradas y consultarla por conductor o por placa." },
+    { ruta: "/rutas", titulo: "Rutas", etiqueta: "Rutas", menu: true, protegida: true,
+        cargar: () => import("./vistas/rutas.js") },
     { ruta: "/cargues", titulo: "Cargue de Excel", etiqueta: "Cargues", menu: true, protegida: true,
         cargar: () => import("./vistas/cargues.js") },
     // Resultado de un cargue concreto: al terminar de subir se navega aquí, y así "Atrás" y F5 funcionan

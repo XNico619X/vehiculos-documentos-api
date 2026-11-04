@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.utolima.vehiculosdocumentosapi.dto.CambioEstadoConductorDTO;
+import com.utolima.vehiculosdocumentosapi.dto.ConductorAsociadoResponseDTO;
 import com.utolima.vehiculosdocumentosapi.dto.VehiculoPersonaRequestDTO;
 import com.utolima.vehiculosdocumentosapi.model.VehiculoPersona;
 import com.utolima.vehiculosdocumentosapi.service.VehiculoPersonaService;
@@ -49,7 +50,7 @@ public class VehiculoPersonaController {
 
     // Extra util para probar: listar los conductores de un vehiculo especifico
     @org.springframework.web.bind.annotation.GetMapping("/{idVehiculo}/conductores")
-    public ResponseEntity<List<VehiculoPersona>> listarConductoresDeVehiculo(@PathVariable Long idVehiculo) {
+    public ResponseEntity<List<ConductorAsociadoResponseDTO>> listarConductoresDeVehiculo(@PathVariable Long idVehiculo) {
         return ResponseEntity.ok(vehiculoPersonaService.listarConductoresDeVehiculo(idVehiculo));
     }
 }

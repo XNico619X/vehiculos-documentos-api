@@ -1092,3 +1092,139 @@
 .cuenta-layout .texto-tenue {
     margin-bottom: 1.25rem;
 }
+
+/* ============================================================================
+   RUTAS  (vistas/rutas.js)
+   ========================================================================= */
+.rutas-layout {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+    align-items: start;
+}
+
+.rutas-consultas {
+    display: grid;
+    gap: 1rem;
+}
+
+.rutas-consultas .titulo-seccion {
+    margin-bottom: 0;
+}
+
+.acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+/* Editor de paradas */
+.paradas-grupo {
+    display: grid;
+    gap: .9rem;
+    margin: 0;
+    padding: 1.25rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+}
+
+.paradas-grupo legend {
+    padding: 0 .5rem;
+    font-weight: 600;
+}
+
+.paradas-editor {
+    display: grid;
+    gap: .9rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.parada-editor {
+    display: grid;
+    gap: .9rem;
+    padding: 1rem;
+    background: rgba(8, 14, 31, .55);
+    border: 1px solid var(--linea);
+    border-left: 3px solid var(--cobalto-claro);
+    border-radius: var(--radio-chico);
+}
+
+.parada-editor:first-child { border-left-color: var(--ok); }
+.parada-editor:last-child { border-left-color: var(--lima); }
+
+.parada-editor-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+}
+
+.parada-titulo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    font-size: 1rem;
+}
+
+.paradas-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem 1.25rem;
+}
+
+/* Consultas por conductor y por placa */
+.consulta-ruta {
+    display: grid;
+    gap: .75rem;
+}
+
+.consulta-ruta h3 {
+    font-size: 1.15rem;
+}
+
+.consulta-ruta-resultado:empty {
+    display: none;
+}
+
+.rutas-codigos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rutas-codigos .boton {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+.rutas-tarjetas {
+    display: grid;
+    gap: .75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ruta-tarjeta {
+    display: grid;
+    gap: .35rem;
+    padding: 1rem 1.25rem;
+}
+
+.ruta-tarjeta .boton {
+    justify-self: start;
+    margin-top: .35rem;
+}
+
+@media (max-width: 1000px) {
+    .rutas-layout {
+        grid-template-columns: 1fr;
+    }
+}
